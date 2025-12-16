@@ -70,18 +70,20 @@ public class CalculatorController {
     }
 
     @GetMapping("calculate/ratio")
-    public ResponseEntity<List<List<Double>>> calculateRatio(@RequestParam Long cassette_id, @RequestParam Long crankset_id) {
+    public ResponseEntity<ResultResponse> calculateRatio(@RequestParam Long cassette_id, @RequestParam Long crankset_id) {
         Cassette cassette = findRequiredEntity(cassetteRepo, cassette_id, "Cassette");
         Crankset crankset = findRequiredEntity(cranksetRepo, crankset_id, "Crankset");
 
         Calculation calculation = new Calculation(cassette, crankset);
         List<List<Double>> result = calculation.getRatio();
 
-        return ResponseEntity.ok(result);
+        ResultResponse response = new ResultResponse(result, crankset.getRings(), cassette.getSprockets());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("calculate/rollout")
-    public ResponseEntity<List<List<Double>>> calculateRollout(@RequestParam Long cassette_id, @RequestParam Long crankset_id, @RequestParam Long tyre_id) {
+    public ResponseEntity<ResultResponse> calculateRollout(@RequestParam Long cassette_id, @RequestParam Long crankset_id, @RequestParam Long tyre_id) {
         Cassette cassette = findRequiredEntity(cassetteRepo, cassette_id, "Cassette");
         Crankset crankset = findRequiredEntity(cranksetRepo, crankset_id, "Crankset");
         Tyre tyre = findRequiredEntity(tyreRepo, tyre_id, "Tyre");
@@ -89,11 +91,13 @@ public class CalculatorController {
         Calculation calculation = new Calculation(cassette, crankset, tyre);
         List<List<Double>> result = calculation.getRollout();
 
-        return ResponseEntity.ok(result);
+        ResultResponse response = new ResultResponse(result, crankset.getRings(), cassette.getSprockets());
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("calculate/speed")
-    public ResponseEntity<List<List<Double>>> calculateSpeed(
+    public ResponseEntity<ResultResponse> calculateSpeed(
             @RequestParam Long cassette_id,
             @RequestParam Long crankset_id,
             @RequestParam Long tyre_id,
@@ -114,6 +118,8 @@ public class CalculatorController {
         Calculation calculation = new Calculation(cassette, crankset, tyre, cadenceList);
         List<List<Double>> result = calculation.getSpeed();
 
-        return ResponseEntity.ok(result);
+        ResultResponse response = new ResultResponse(result, crankset.getRings(), cassette.getSprockets());
+
+        return ResponseEntity.ok(response);
     }
 }
