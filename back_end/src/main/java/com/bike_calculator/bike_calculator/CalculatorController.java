@@ -101,8 +101,8 @@ public class CalculatorController {
             @RequestParam Long cassette_id,
             @RequestParam Long crankset_id,
             @RequestParam Long tyre_id,
-            @RequestParam(defaultValue = "50") int min_cadence,
-            @RequestParam(defaultValue = "110") int max_cadence,
+            @RequestParam(defaultValue = "60") int min_cadence,
+            @RequestParam(defaultValue = "120") int max_cadence,
             @RequestParam(defaultValue = "10") int cadence_increment) {
 
         Cassette cassette = findRequiredEntity(cassetteRepo, cassette_id, "Cassette");
@@ -118,7 +118,7 @@ public class CalculatorController {
         Calculation calculation = new Calculation(cassette, crankset, tyre, cadenceList);
         List<List<Double>> result = calculation.getSpeed();
 
-        ResultResponse response = new ResultResponse(result, crankset.getRings(), cassette.getSprockets());
+        ResultResponse response = new ResultResponse(result, crankset.getRings(), cassette.getSprockets(), cadenceList);
 
         return ResponseEntity.ok(response);
     }

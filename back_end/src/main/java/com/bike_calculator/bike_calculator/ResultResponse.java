@@ -6,12 +6,22 @@ public class ResultResponse {
     private List<List<Double>> result;
     private List<Integer> chainrings;
     private List<Integer> sprockets;
+    private List<Integer> cadences;
 
     public ResultResponse(List<List<Double>> result, List<Integer> chainrings, List<Integer> sprockets) {
         this.result = result;
         this.chainrings = chainrings;
         this.sprockets = sprockets;
     }
+
+    public ResultResponse(List<List<Double>> result, List<Integer> chainrings, List<Integer> sprockets, List<Integer> cadences) {
+        this.result = result;
+        this.chainrings = chainrings;
+        this.sprockets = sprockets;
+        this.cadences = cadences;
+    }
+
+    
 
     public List<List<Double>> getResults() {
         return result;
@@ -23,5 +33,9 @@ public class ResultResponse {
 
     public List<Integer> getSprockets() {
         return sprockets;
+    }
+
+    public List<Integer> getCadences() {
+        return cadences;
     }
 }

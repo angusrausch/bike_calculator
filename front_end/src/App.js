@@ -6,6 +6,7 @@ import Navbar from './Navbar';
 import Home from './Home';
 import Ratio from './Ratio';
 import Rollout from './Rollout';
+import Speed from './Speed';
 
 function App() {
 
@@ -18,6 +19,7 @@ function App() {
             <Route path='/' element={<Home/>}/>
             <Route path='/ratios' element={<Ratio/>}/>
             <Route path='/rollout' element={<Rollout/>}/>
+            <Route path='/speed' element={<Speed/>}/>
           </Routes>
         </BrowserRouter>
       </div>
