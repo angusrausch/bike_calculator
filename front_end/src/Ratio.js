@@ -8,6 +8,10 @@ const Ratio = () => {
     const [error, setError] = useState("");
     const [cassetteOptions, setCassetteOptions] = useState([]);
     const [chainringOptions, setChainringOptions] = useState([]);
+    const [sprockets, setSprockets] = useState([]);
+    const [chainrings, setChainrings] = useState([]);
+    const [results, setResults] = useState([]);
+
 
     const handleSubmit = async () => {
         setError("");
@@ -56,14 +60,14 @@ const Ratio = () => {
             );
 
             const calculations = await response.json();
-            console.log(calculations);
-            // if (searchData && searchData.data && searchData.data.length > 0) {
-            //     const randomIndex = Math.floor(Math.random() * searchData.data.length);
-            //     const randomImdbId = searchData.data[randomIndex].imdbID;
-            //     return randomImdbId;
-            // } else {
-            //     throw new Error("No data found in searchData");
-            // }
+
+            if (calculations && calculations.results && calculations.results.length > 0) {
+                setSprockets(calculations.sprockets);
+                setChainrings(calculations.chainrings);
+                setResults(calculations.results);
+            } else {
+                throw new Error("No data found in searchData");
+            }
         } catch (error) {
             console.error("Failed to fetch calculations:", error);
             throw error;
@@ -174,7 +178,7 @@ const Ratio = () => {
                             onClick={handleSubmit}
                             className="mt-4 bg-gray-400 min-w-36 text-white py-2 px-5 rounded shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
                         >
-                            Click Me
+                            Submit
                         </button>
                     </div>
 
@@ -184,8 +188,39 @@ const Ratio = () => {
                         </div>
                     )}
                 </div>
-            </div>
 
+                {results.length > 0 && (
+                    <div class="bg-gray-400 w-fit mx-auto border-4 border-gray-800">
+                        <table>
+                            <tr>
+                                <th class="border-4 border-gray-800 p-1">Ratios</th>
+                                {sprockets.map((sprocket) => (
+                                    <th class="border-4 border-gray-800 p-1">{sprocket}</th>
+                                ))}
+                                <th class="border-4 border-gray-800 p-1">Ratios</th>
+                            </tr>
+
+                            {chainrings.map((chainring, chainringIdx) => (
+                                <tr key={chainringIdx}>
+                                    <th className="border-4 border-gray-800 p-1">{chainring}</th>
+                                    {results[chainringIdx].map((result, sprocketIdx) => (
+                                        <td key={sprocketIdx} className="border-4 border-gray-800 p-1 bg-gray-600">{result.toFixed(2)}</td>
+                                    ))}
+                                    <th className="border-4 border-gray-800 p-1">{chainring}</th>
+                                </tr>
+                            ))}
+
+                            <tr>
+                                <th class="border-4 border-gray-800 p-1">Ratios</th>
+                                {sprockets.map((sprocket) => (
+                                    <th class="border-4 border-gray-800 p-1">{sprocket}</th>
+                                ))}
+                                <th class="border-4 border-gray-800 p-1">Ratios</th>
+                            </tr>
+                        </table>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
