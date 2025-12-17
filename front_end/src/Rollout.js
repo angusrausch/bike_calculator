@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-const Ratio = () => {
+const Rollout = () => {
+    const [tyreSelection, setTyreSelection] = useState("0");
     const [chainringSelection, setChainringSelection] = useState("0");
     const [manualChainring, setManualChainring] = useState("");
     const [cassetteSelection, setCassetteSelection] = useState("0");
@@ -8,6 +9,7 @@ const Ratio = () => {
     const [error, setError] = useState("");
     const [cassetteOptions, setCassetteOptions] = useState([]);
     const [chainringOptions, setChainringOptions] = useState([]);
+    const [tyreOptions, setTyreOptions] = useState([]);
     const [sprockets, setSprockets] = useState([]);
     const [chainrings, setChainrings] = useState([]);
     const [results, setResults] = useState([]);
@@ -17,6 +19,13 @@ const Ratio = () => {
         setError("");
 
         const params = new URLSearchParams();
+
+        if (tyreSelection !== "0") {
+            params.append("tyre_id", tyreSelection);
+        } else {
+            setError("No Tyre Selected");
+            return;
+        }
 
         if (chainringSelection !== "0") {
             params.append("crankset_id", chainringSelection);
@@ -56,7 +65,7 @@ const Ratio = () => {
         try {
             const params = new URLSearchParams(argList).toString();
             const response = await fetch(
-                `http://localhost:8080/calculate/ratio?${params}`
+                `http://localhost:8080/calculate/rollout?${params}`
             );
 
             const calculations = await response.json();
@@ -82,22 +91,25 @@ const Ratio = () => {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [cassetteRes, chainringRes] = await Promise.all([
+                const [cassetteRes, chainringRes, tyresRes] = await Promise.all([
                     fetch("http://localhost:8080/cassettes"),
                     fetch("http://localhost:8080/cranksets"),
+                    fetch("http://localhost:8080/tyres"),
                 ]);
 
-                const [cassetteData, chainringData] = await Promise.all([
+                const [cassetteData, chainringData, tyreData] = await Promise.all([
                     cassetteRes.json(),
                     chainringRes.json(),
+                    tyresRes.json()
                 ]);
 
-                if (!Array.isArray(cassetteData) || !Array.isArray(chainringData)) {
+                if (!Array.isArray(cassetteData) || !Array.isArray(chainringData) || !Array.isArray(tyreData)) {
                     throw new Error("Invalid API response");
                 }
 
                 setCassetteOptions(cassetteData);
                 setChainringOptions(chainringData);
+                setTyreOptions(tyreData);
             } catch (err) {
                 console.error(err);
                 setError("Failed to load bike components");
@@ -111,11 +123,30 @@ const Ratio = () => {
     return (
         <div>
             <h1 className="mb-12 !text-[60px] font-medium p-4 text-black text-center">
-                Ratios
+                Rollout
             </h1>
 
             <div className="bg-black bg-cover h-screen">
                 <div className="text-white px-6 py-4 w-4/5 mx-auto text-center mb-20 input-background">
+
+                    <fieldset class="w-fit inline-block mb-4 align-top">
+                        Tyre Selection:
+                        <br/>
+                        <select
+                            value={tyreSelection}
+                            onChange={(e) => setTyreSelection(e.target.value)}
+                            className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                        >
+                            <option selected disabled="true" value="0">-- Tyre --</option>
+
+                            {tyreOptions.map((tyre) => (
+                                <option key={tyre.id} value={tyre.id}>
+                                    {tyre.name}
+                                </option>
+                            ))}
+
+                        </select>
+                    </fieldset>
 
                     <fieldset className="w-fit inline-block mb-4 align-top px-1">
                         Chainring Selection:
@@ -204,7 +235,7 @@ const Ratio = () => {
                                 <tr key={chainringIdx}>
                                     <th className="border-4 border-gray-800 p-1">{chainring}</th>
                                     {results[chainringIdx].slice(0).reverse().map((result, sprocketIdx) => (
-                                        <td key={sprocketIdx} className="border-4 border-gray-800 p-1 bg-gray-600">{result.toFixed(2)}</td>
+                                        <td key={sprocketIdx} className="border-4 border-gray-800 p-1 bg-gray-600">{(result / 1000).toFixed(2)}</td>
                                     ))}
                                     <th className="border-4 border-gray-800 p-1">{chainring}</th>
                                 </tr>
@@ -225,4 +256,4 @@ const Ratio = () => {
     );
 };
 
-export default Ratio;
+export default Rollout;
