@@ -122,9 +122,9 @@ const Ratio = () => {
                             className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
                         >
                             <option value="0">-- Manual Input --</option>
-                            {cassetteOptions.map((cassette) => (
-                                <option key={cassette.id} value={cassette.id}>
-                                    {cassette.name}
+                            {chainringOptions.map((chainring) => (
+                                <option key={chainring.id} value={chainring.id}>
+                                    {chainring.name}
                                 </option>
                             ))}
                         </select>
@@ -185,6 +185,7 @@ const Ratio = () => {
                     )}
                 </div>
             </div>
+
         </div>
     );
 };
