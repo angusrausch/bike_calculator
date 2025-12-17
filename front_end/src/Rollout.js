@@ -129,7 +129,7 @@ const Rollout = () => {
             <div className="bg-black bg-cover h-screen">
                 <div className="text-white px-6 py-4 w-4/5 mx-auto text-center mb-20 input-background">
 
-                    <fieldset class="w-fit inline-block mb-4 align-top">
+                    <fieldset className="w-fit inline-block mb-4 align-top">
                         Tyre Selection:
                         <br/>
                         <select
@@ -137,7 +137,7 @@ const Rollout = () => {
                             onChange={(e) => setTyreSelection(e.target.value)}
                             className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
                         >
-                            <option selected disabled="true" value="0">-- Tyre --</option>
+                            <option defaultValue={true} disabled={true} value="0">-- Tyre --</option>
 
                             {tyreOptions.map((tyre) => (
                                 <option key={tyre.id} value={tyre.id}>
@@ -221,33 +221,39 @@ const Rollout = () => {
                 </div>
 
                 {results.length > 0 && (
-                    <div class="bg-gray-400 w-fit mx-auto border-4 border-gray-800">
+                    <div className="bg-gray-400 w-fit mx-auto border-4 border-gray-800">
                         <table>
-                            <tr>
-                                <th class="border-4 border-gray-800 p-1">Ratios</th>
-                                {sprockets.slice(0).reverse().map((sprocket) => (
-                                    <th class="border-4 border-gray-800 p-1">{sprocket}</th>
-                                ))}
-                                <th class="border-4 border-gray-800 p-1">Ratios</th>
-                            </tr>
-
-                            {chainrings.map((chainring, chainringIdx) => (
-                                <tr key={chainringIdx}>
-                                    <th className="border-4 border-gray-800 p-1">{chainring}</th>
-                                    {results[chainringIdx].slice(0).reverse().map((result, sprocketIdx) => (
-                                        <td key={sprocketIdx} className="border-4 border-gray-800 p-1 bg-gray-600">{(result / 1000).toFixed(2)}</td>
+                            <thead>
+                                <tr>
+                                    <th className="border-4 border-gray-800 p-1">Ratios</th>
+                                    {sprockets.slice(0).reverse().map((sprocket) => (
+                                        <th key={sprocket} className="border-4 border-gray-800 p-1">{sprocket}</th>
                                     ))}
-                                    <th className="border-4 border-gray-800 p-1">{chainring}</th>
+                                    <th className="border-4 border-gray-800 p-1">Ratios</th>
                                 </tr>
-                            ))}
+                            </thead>
 
-                            <tr>
-                                <th class="border-4 border-gray-800 p-1">Ratios</th>
-                                {sprockets.slice(0).reverse().map((sprocket) => (
-                                    <th class="border-4 border-gray-800 p-1">{sprocket}</th>
+                            <tbody>
+                                {chainrings.map((chainring, chainringIdx) => (
+                                    <tr key={chainringIdx}>
+                                        <th className="border-4 border-gray-800 p-1">{chainring}</th>
+                                        {results[chainringIdx].slice(0).reverse().map((result, sprocketIdx) => (
+                                            <td key={sprocketIdx} className="border-4 border-gray-800 p-1 bg-gray-600">{(result / 1000).toFixed(2)}</td>
+                                        ))}
+                                        <th className="border-4 border-gray-800 p-1">{chainring}</th>
+                                    </tr>
                                 ))}
-                                <th class="border-4 border-gray-800 p-1">Ratios</th>
-                            </tr>
+                            </tbody>
+
+                            <thead>
+                                <tr>
+                                    <th className="border-4 border-gray-800 p-1">Ratios</th>
+                                    {sprockets.slice(0).reverse().map((sprocket) => (
+                                        <th key={sprocket} className="border-4 border-gray-800 p-1">{sprocket}</th>
+                                    ))}
+                                    <th className="border-4 border-gray-800 p-1">Ratios</th>
+                                </tr>
+                            </thead>
                         </table>
                     </div>
                 )}
