@@ -2,9 +2,10 @@ package com.bike_calculator.bike_calculator;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
-import jakarta.persistence.Column;      // Added
-import jakarta.persistence.Convert;      // Added
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,18 +21,19 @@ public class Crankset {
     private long id;
     private String name;
 
-    @Column(name = "rings")             // Maps the field to a single column named 'rings'
-    @Convert(converter = IntListConverter.class) // Uses the converter to handle List<Integer> <-> String
+    @Column(name = "rings")
+    @Convert(converter = IntListConverter.class)
     private List<Integer> rings;
 
     public Crankset() {
-        // Default constructor required by JPA and Jackson
+
     }
 
     public Crankset(String name, List<Integer> rings) {
         this.name = name;
         Collections.sort(rings);
-        this.rings = rings;
+        this.rings = rings.stream().distinct().collect(Collectors.toList());
+
     }
 
     public long getId() {return id; }
