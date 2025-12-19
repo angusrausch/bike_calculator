@@ -8,7 +8,7 @@ const Speed = () => {
     const [manualCassette, setManualCassette] = useState("");
     const [minCadence, setMinCadence] = useState("60");
     const [maxCadence, setMaxCadence] = useState("120");
-    const [cadenceIncrement, setCadenceIncrement] = useState("10");
+    const [cadenceIncrement, setCadenceIncrement] = useState("5");
     const [error, setError] = useState("");
     const [cassetteOptions, setCassetteOptions] = useState([]);
     const [chainringOptions, setChainringOptions] = useState([]);
@@ -16,6 +16,14 @@ const Speed = () => {
     const [cadences, setCadences] = useState([]);
     const [ratios, setRatios] = useState([]);
     const [results, setResults] = useState([]);
+    const [slowSpeed, setSlowSpeed] = useState("20");
+    const [fastSpeed, setFastSpeed] = useState("50");
+    const unitOptions = {
+        METRIC: 'Kph',
+        IMPERIAL: 'Mph'
+    };
+    const [units, setUnits] = useState(unitOptions.METRIC);
+    const [unitsCalculator, setUnitsCalculator] = useState(1);
 
 
     const handleSubmit = async () => {
@@ -101,6 +109,16 @@ const Speed = () => {
     const checkValid = (input) => {
         if (/^[0-9,]*$/.test(input)) return true;
         return false;
+    }
+
+    const changeUnits = () => {
+        if (units === unitOptions.METRIC ) {
+            setUnits(unitOptions.IMPERIAL);
+            setUnitsCalculator(1.609);
+        } else {
+            setUnits(unitOptions.METRIC);
+            setUnitsCalculator(1);
+        }
     }
 
     useEffect(() => {
@@ -228,12 +246,33 @@ const Speed = () => {
                     </fieldset>
 
                     <div className="w-full">
+                        <button 
+                            onClick={changeUnits} 
+                            className="bg-gray-700 text-white px-4 py-2 rounded border border-blue-900 hover:bg-gray-600 transition-colors"
+                        >
+                            Change Units
+                        </button>
                         <button
                             onClick={handleSubmit}
-                            className="mt-4 bg-gray-400 min-w-36 text-white py-2 px-5 rounded shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
+                            className="mt-4 bg-gray-400 min-w-36 text-white py-2 px-5 mx-5 rounded shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
                         >
                             Submit
                         </button>
+                        Slow
+                        <input
+                        type="number"
+                        value={slowSpeed}
+                        onChange={(e) => setSlowSpeed(e.target.value)}
+                        className="w-16 flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400 h-7 ml-1 mr-4"
+                        />
+
+                        Fast
+                        <input
+                        type="number"
+                        value={fastSpeed}
+                        onChange={(e) => setFastSpeed(e.target.value)}
+                        className="w-16 flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400 h-7 ml-1"
+                        />
                     </div>
 
                     {error && (
@@ -260,9 +299,22 @@ const Speed = () => {
                                 {ratios.map((ratio, ratioIdx) => (
                                     <tr key={ratioIdx}>
                                         <th className="border-4 border-gray-800 p-1">{ratio}</th>
-                                        {results[ratioIdx].map((result, cadenceIdx) => (
-                                            <td key={cadenceIdx} className="border-4 border-gray-800 p-1 bg-gray-600">{result.toFixed(2)}</td>
-                                        ))}
+                                        {results[ratioIdx].map((result, cadenceIdx) => {
+                                            const backgroundColour =
+                                                result <= slowSpeed
+                                                    ? "bg-red-600"
+                                                    : result >= fastSpeed
+                                                    ? "bg-green-600"
+                                                    : "bg-gray-600";
+                                            return (
+                                                <td
+                                                    key={cadenceIdx}
+                                                    className={`border-4 border-gray-800 p-1 ${backgroundColour}`}
+                                                >
+                                                    {(result / unitsCalculator).toFixed(2)} {units}
+                                                </td>
+                                            );
+                                        })}
                                         <th className="border-4 border-gray-800 p-1">{ratio}</th>
                                     </tr>
                                 ))}

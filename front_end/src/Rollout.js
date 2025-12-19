@@ -13,7 +13,13 @@ const Rollout = () => {
     const [sprockets, setSprockets] = useState([]);
     const [chainrings, setChainrings] = useState([]);
     const [results, setResults] = useState([]);
-
+    const unitOptions = {
+        METRIC: 'Meters',
+        IMPERIAL: 'Inches'
+    };
+    const [units, setUnits] = useState(unitOptions.METRIC);
+    const [unitsCalculator, setUnitsCalculator] = useState(1);
+    const [rollout, setRollout] = useState("7");
 
     const handleSubmit = async () => {
         setError("");
@@ -86,6 +92,16 @@ const Rollout = () => {
     const checkValid = (input) => {
         if (/^[0-9,]*$/.test(input)) return true;
         return false;
+    }
+
+    const changeUnits = () => {
+        if (units === unitOptions.METRIC ) {
+            setUnits(unitOptions.IMPERIAL);
+            setUnitsCalculator(39.3701);
+        } else {
+            setUnits(unitOptions.METRIC)
+            setUnitsCalculator(1);
+        }
     }
 
     useEffect(() => {
@@ -205,12 +221,26 @@ const Rollout = () => {
                     </fieldset>
 
                     <div className="w-full">
+                        <button 
+                            onClick={changeUnits} 
+                            className="bg-gray-700 text-white px-4 py-2 rounded border border-blue-900 hover:bg-gray-600 transition-colors"
+                        >
+                            Change Units
+                        </button>
                         <button
                             onClick={handleSubmit}
-                            className="mt-4 bg-gray-400 min-w-36 text-white py-2 px-5 rounded shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
+                            className="mt-4 bg-gray-400 min-w-36 text-white py-2 px-5 rounded shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all mx-5"
                         >
                             Submit
                         </button>
+                        Rollout
+                        <input
+                        type="number"
+                        value={(rollout * unitsCalculator)}
+                        onChange={(e) => setRollout(e.target.value / unitsCalculator)}
+                        className="w-20 flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400 h-7 ml-1 mr-1"
+                        />
+                        {units}
                     </div>
 
                     {error && (
@@ -237,9 +267,23 @@ const Rollout = () => {
                                 {chainrings.map((chainring, chainringIdx) => (
                                     <tr key={chainringIdx}>
                                         <th className="border-4 border-gray-800 p-1">{chainring}</th>
-                                        {results[chainringIdx].slice(0).reverse().map((result, sprocketIdx) => (
-                                            <td key={sprocketIdx} className="border-4 border-gray-800 p-1 bg-gray-600">{(result / 1000).toFixed(2)}</td>
-                                        ))}
+                                        {results[chainringIdx].slice(0).reverse().map((result, sprocketIdx) => {
+                                            const backgroundColour =
+                                                result / 1000 < (rollout - 0.5)
+                                                    ? "bg-gray-600"
+                                                    : result / 1000 >= rollout - 0.5 && result / 1000 < rollout
+                                                    ? "bg-green-600"
+                                                    : "bg-red-600";
+
+                                            return (
+                                                <td
+                                                    key={sprocketIdx}
+                                                    className={`border-4 border-gray-800 p-1 ${backgroundColour}`}
+                                                >
+                                                    {(result / 1000 * unitsCalculator).toFixed(2)}
+                                                </td>
+                                            );
+                                        })}
                                         <th className="border-4 border-gray-800 p-1">{chainring}</th>
                                     </tr>
                                 ))}
