@@ -13,7 +13,7 @@ function App() {
   return (
     <div className="bg-gray-900 text-white min-h-screen bg-cover flex">
       <Navbar />
-      <div className='flex-grow p-4 transition-all duration-300 ease-in-out'>
+      <div className='flex-grow transition-all duration-300 ease-in-out'>
         <BrowserRouter>
           <Routes>
             <Route path='/' element={<Home/>}/>
