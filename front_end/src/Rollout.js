@@ -63,16 +63,17 @@ const Rollout = () => {
             return;
         }
 
-        const argList = params.toString();
-        await loadCalculations(argList);
+        await loadCalculations(params);
     };
 
-    const loadCalculations = async (argList) => {
+    const loadCalculations = async (params) => {
         try {
-            const params = new URLSearchParams(argList).toString();
             const response = await fetch(
                 `http://localhost:8080/calculate/rollout?${params}`
             );
+
+            const newUrl = `${window.location.pathname}?${params}`;
+            window.history.replaceState({}, '', newUrl);
 
             const calculations = await response.json();
 
@@ -135,6 +136,33 @@ const Rollout = () => {
         loadData();
     }, []);
 
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        const cranksetId = params.get("crankset_id");
+        const cassetteId = params.get("cassette_id");
+        const manualChainringParam = params.get("manual_chainring");
+        const manualCassetteParam = params.get("manual_cassette");
+        const tyreId = params.get("tyre_id");
+
+        if (cranksetId) setChainringSelection(cranksetId);
+        if (cassetteId) setCassetteSelection(cassetteId);
+        if (manualChainringParam) setManualChainring(manualChainringParam);
+        if (manualCassetteParam) setManualCassette(manualCassetteParam);
+        if (tyreId) setTyreSelection(tyreId);
+    }, []);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+
+        const hasChainring = params.get("crankset_id") || params.get("manual_chainring");
+        const hasCassette = params.get("cassette_id") || params.get("manual_cassette");
+        const hasTyre = params.get("tyre_id");
+
+        if (hasChainring && hasCassette && hasTyre) {
+            loadCalculations(params);
+        }
+    }, [chainringSelection, cassetteSelection, manualChainring, manualCassette]);
 
     return (
         <div>
