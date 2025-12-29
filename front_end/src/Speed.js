@@ -159,180 +159,178 @@ const Speed = () => {
                 Speed
             </h1>
 
-            <div className="bg-black bg-cover h-screen">
-                <div className="text-white px-6 py-4 w-4/5 mx-auto text-center mb-20 input-background">
+            <div className="text-white px-6 py-4 w-4/5 mx-auto text-center mb-20 input-background">
 
-                    <fieldset className="w-fit inline-block mb-4 align-top">
-                        Tyre Selection:
-                        <br/>
-                        <select
-                            value={tyreSelection}
-                            onChange={(e) => setTyreSelection(e.target.value)}
-                            className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
-                        >
-                            <option defaultValue={true} disabled={true} value="0">-- Tyre --</option>
+                <fieldset className="w-fit inline-block mb-4 align-top">
+                    Tyre Selection:
+                    <br/>
+                    <select
+                        value={tyreSelection}
+                        onChange={(e) => setTyreSelection(e.target.value)}
+                        className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                    >
+                        <option defaultValue={true} disabled={true} value="0">-- Tyre --</option>
 
-                            {tyreOptions.map((tyre) => (
-                                <option key={tyre.id} value={tyre.id}>
-                                    {tyre.name}
-                                </option>
-                            ))}
+                        {tyreOptions.map((tyre) => (
+                            <option key={tyre.id} value={tyre.id}>
+                                {tyre.name}
+                            </option>
+                        ))}
 
-                        </select>
-                    </fieldset>
+                    </select>
+                </fieldset>
 
-                    <fieldset className="w-fit inline-block mb-4 align-top px-1">
-                        Chainring Selection:
-                        <br />
-                        <select
-                            value={chainringSelection}
-                            onChange={(e) => setChainringSelection(e.target.value)}
-                            className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
-                        >
-                            <option value="0">-- Manual Input --</option>
-                            {chainringOptions.map((chainring) => (
-                                <option key={chainring.id} value={chainring.id}>
-                                    {chainring.name}
-                                </option>
-                            ))}
-                        </select>
+                <fieldset className="w-fit inline-block mb-4 align-top px-1">
+                    Chainring Selection:
+                    <br />
+                    <select
+                        value={chainringSelection}
+                        onChange={(e) => setChainringSelection(e.target.value)}
+                        className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                    >
+                        <option value="0">-- Manual Input --</option>
+                        {chainringOptions.map((chainring) => (
+                            <option key={chainring.id} value={chainring.id}>
+                                {chainring.name}
+                            </option>
+                        ))}
+                    </select>
 
-                        <br />
-                        <small>Manual Input:</small>
-                        <br />
-                        <input
-                            type="text"
-                            value={manualChainring}
-                            onChange={(e) => setManualChainring(e.target.value)}
-                            placeholder="Enter chainring teeth"
-                            className="text-xs w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
-                        />
-                    </fieldset>
+                    <br />
+                    <small>Manual Input:</small>
+                    <br />
+                    <input
+                        type="text"
+                        value={manualChainring}
+                        onChange={(e) => setManualChainring(e.target.value)}
+                        placeholder="Enter chainring teeth"
+                        className="text-xs w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                    />
+                </fieldset>
 
-                    <fieldset className="w-fit inline-block mb-4 align-top  px-1">
-                        Cassette Selection:
-                        <br />
-                        <select
-                            value={cassetteSelection}
-                            onChange={(e) => setCassetteSelection(e.target.value)}
-                            className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
-                        >
-                            <option value="0">-- Manual Input --</option>
-                            {cassetteOptions.map((cassette) => (
-                                <option key={cassette.id} value={cassette.id}>
-                                    {cassette.name}
-                                </option>
-                            ))}
-                        </select>
+                <fieldset className="w-fit inline-block mb-4 align-top  px-1">
+                    Cassette Selection:
+                    <br />
+                    <select
+                        value={cassetteSelection}
+                        onChange={(e) => setCassetteSelection(e.target.value)}
+                        className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                    >
+                        <option value="0">-- Manual Input --</option>
+                        {cassetteOptions.map((cassette) => (
+                            <option key={cassette.id} value={cassette.id}>
+                                {cassette.name}
+                            </option>
+                        ))}
+                    </select>
 
-                        <br />
-                        <small>Manual Input:</small>
-                        <br />
-                        <input
-                            type="text"
-                            value={manualCassette}
-                            onChange={(e) => setManualCassette(e.target.value)}
-                            placeholder="Enter cassette cogs (e.g., 11,12,13)"
-                            className="text-xs w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
-                        />
-                    </fieldset>
+                    <br />
+                    <small>Manual Input:</small>
+                    <br />
+                    <input
+                        type="text"
+                        value={manualCassette}
+                        onChange={(e) => setManualCassette(e.target.value)}
+                        placeholder="Enter cassette cogs (e.g., 11,12,13)"
+                        className="text-xs w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                    />
+                </fieldset>
 
-                    <fieldset className="w-fit inline-block mb-4 align-top">
-                        Cadence Selection:
-                        <br/>
-                        Min:<input type="number"value={minCadence} onChange={(e) => setMinCadence(e.target.value)} className="text-center flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"/><br/>
-                        Max:<input type="number" value={maxCadence} onChange={(e) => setMaxCadence(e.target.value)} className="text-center flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"/><br/>
-                        Increment:<input type="number" value={cadenceIncrement} onChange={(e) => setCadenceIncrement(e.target.value)} className="text-center flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"/>
-                    </fieldset>
+                <fieldset className="w-fit inline-block mb-4 align-top">
+                    Cadence Selection:
+                    <br/>
+                    Min:<input type="number"value={minCadence} onChange={(e) => setMinCadence(e.target.value)} className="text-center flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"/><br/>
+                    Max:<input type="number" value={maxCadence} onChange={(e) => setMaxCadence(e.target.value)} className="text-center flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"/><br/>
+                    Increment:<input type="number" value={cadenceIncrement} onChange={(e) => setCadenceIncrement(e.target.value)} className="text-center flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"/>
+                </fieldset>
 
-                    <div className="w-full">
-                        <button 
-                            onClick={changeUnits} 
-                            className="bg-gray-700 text-white px-4 py-2 rounded border border-blue-900 hover:bg-gray-600 transition-colors"
-                        >
-                            Change Units
-                        </button>
-                        <button
-                            onClick={handleSubmit}
-                            className="mt-4 bg-gray-400 min-w-36 text-white py-2 px-5 mx-5 rounded shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
-                        >
-                            Submit
-                        </button>
-                        Slow
-                        <input
-                        type="number"
-                        value={slowSpeed}
-                        onChange={(e) => setSlowSpeed(e.target.value)}
-                        className="w-16 flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400 h-7 ml-1 mr-4"
-                        />
+                <div className="w-full">
+                    <button 
+                        onClick={changeUnits} 
+                        className="bg-gray-700 text-white px-4 py-2 rounded border border-blue-900 hover:bg-gray-600 transition-colors"
+                    >
+                        Change Units
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        className="mt-4 bg-gray-400 min-w-36 text-white py-2 px-5 mx-5 rounded shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all"
+                    >
+                        Submit
+                    </button>
+                    Slow
+                    <input
+                    type="number"
+                    value={slowSpeed}
+                    onChange={(e) => setSlowSpeed(e.target.value)}
+                    className="w-16 flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400 h-7 ml-1 mr-4"
+                    />
 
-                        Fast
-                        <input
-                        type="number"
-                        value={fastSpeed}
-                        onChange={(e) => setFastSpeed(e.target.value)}
-                        className="w-16 flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400 h-7 ml-1"
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="text-red-400 mt-4">
-                            {error}
-                        </div>
-                    )}
+                    Fast
+                    <input
+                    type="number"
+                    value={fastSpeed}
+                    onChange={(e) => setFastSpeed(e.target.value)}
+                    className="w-16 flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400 h-7 ml-1"
+                    />
                 </div>
 
-                {results.length > 0 && (
-                    <div className="bg-gray-400 w-fit mx-auto border-4 border-gray-800">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th className="border-4 border-gray-800 p-1">Ratios</th>
-                                    {cadences.map((sprocket) => (
-                                        <th key={sprocket} className="border-4 border-gray-800 p-1">{sprocket}</th>
-                                    ))}
-                                    <th className="border-4 border-gray-800 p-1">Ratios</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {ratios.map((ratio, ratioIdx) => (
-                                    <tr key={ratioIdx}>
-                                        <th className="border-4 border-gray-800 p-1">{ratio}</th>
-                                        {results[ratioIdx].map((result, cadenceIdx) => {
-                                            const backgroundColour =
-                                                result <= slowSpeed
-                                                    ? "bg-red-600"
-                                                    : result >= fastSpeed
-                                                    ? "bg-green-600"
-                                                    : "bg-gray-600";
-                                            return (
-                                                <td
-                                                    key={cadenceIdx}
-                                                    className={`border-4 border-gray-800 p-1 ${backgroundColour}`}
-                                                >
-                                                    {(result / unitsCalculator).toFixed(2)} {units}
-                                                </td>
-                                            );
-                                        })}
-                                        <th className="border-4 border-gray-800 p-1">{ratio}</th>
-                                    </tr>
-                                ))}
-                            </tbody>
-
-                            <thead>
-                                <tr>
-                                    <th className="border-4 border-gray-800 p-1">Ratios</th>
-                                    {cadences.map((sprocket) => (
-                                        <th key={sprocket} className="border-4 border-gray-800 p-1">{sprocket}</th>
-                                    ))}
-                                    <th className="border-4 border-gray-800 p-1">Ratios</th>
-                                </tr>
-                            </thead>
-                        </table>
+                {error && (
+                    <div className="text-red-400 mt-4">
+                        {error}
                     </div>
                 )}
             </div>
+
+            {results.length > 0 && (
+                <div className="bg-gray-400 w-fit mx-auto border-4 border-gray-800">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th className="border-4 border-gray-800 p-1">Ratios</th>
+                                {cadences.map((sprocket) => (
+                                    <th key={sprocket} className="border-4 border-gray-800 p-1">{sprocket}</th>
+                                ))}
+                                <th className="border-4 border-gray-800 p-1">Ratios</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {ratios.map((ratio, ratioIdx) => (
+                                <tr key={ratioIdx}>
+                                    <th className="border-4 border-gray-800 p-1">{ratio}</th>
+                                    {results[ratioIdx].map((result, cadenceIdx) => {
+                                        const backgroundColour =
+                                            result <= slowSpeed
+                                                ? "bg-red-600"
+                                                : result >= fastSpeed
+                                                ? "bg-green-600"
+                                                : "bg-gray-600";
+                                        return (
+                                            <td
+                                                key={cadenceIdx}
+                                                className={`border-4 border-gray-800 p-1 ${backgroundColour}`}
+                                            >
+                                                {(result / unitsCalculator).toFixed(2)} {units}
+                                            </td>
+                                        );
+                                    })}
+                                    <th className="border-4 border-gray-800 p-1">{ratio}</th>
+                                </tr>
+                            ))}
+                        </tbody>
+
+                        <thead>
+                            <tr>
+                                <th className="border-4 border-gray-800 p-1">Ratios</th>
+                                {cadences.map((sprocket) => (
+                                    <th key={sprocket} className="border-4 border-gray-800 p-1">{sprocket}</th>
+                                ))}
+                                <th className="border-4 border-gray-800 p-1">Ratios</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+            )}
         </div>
     );
 };

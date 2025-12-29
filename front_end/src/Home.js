@@ -1,8 +1,7 @@
 const Home = () => {
 
     return (
-        <div className="bg-black bg-cover h-screen">
-            {/* // <body className="bg-black bg-cover h-screen" style="background-image: url('/static/calc/images/home-page.jpeg');"> */}
+        <div>
 
             <h1 className="!text-[80px] m-5 text-center">Angus' Bike Calculator</h1>
 
