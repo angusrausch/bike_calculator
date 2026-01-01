@@ -26,6 +26,7 @@ export default function BodyBackground() {
     document.body.style.backgroundSize = "cover";
     document.body.style.backgroundPosition = "center";
     document.body.style.backgroundRepeat = "no-repeat";
+    document.body.classList.add("h-full");
     document.body.classList.add("bg-gray-900");
     document.body.classList.add("bg-cover");
 

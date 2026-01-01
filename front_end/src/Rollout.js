@@ -21,6 +21,9 @@ const Rollout = () => {
     const [unitsCalculator, setUnitsCalculator] = useState(1);
     const [rollout, setRollout] = useState("7");
 
+    const hostname = `${window.location.protocol}//${window.location.hostname}`
+
+
     const handleSubmit = async () => {
         setError("");
 
@@ -41,7 +44,7 @@ const Rollout = () => {
                 params.append("manual_chainring", chainring);
             } else {
                 setError("Invalid Manual Chainring");
-            return;
+                return;
             }
         } else {
             setError("No Chainring Selected");
@@ -56,7 +59,7 @@ const Rollout = () => {
                 params.append("manual_cassette", cassette);
             } else {
                 setError("Invalid Manual Cassette");
-            return;
+                return;
             }
         } else {
             setError("No Cassette Selected");
@@ -69,7 +72,7 @@ const Rollout = () => {
     const loadCalculations = async (params) => {
         try {
             const response = await fetch(
-                `http://localhost:8080/calculate/rollout?${params}`
+                `${hostname}:8080/calculate/rollout?${params}`
             );
 
             const newUrl = `${window.location.pathname}?${params}`;
@@ -109,9 +112,9 @@ const Rollout = () => {
         const loadData = async () => {
             try {
                 const [cassetteRes, chainringRes, tyresRes] = await Promise.all([
-                    fetch("http://localhost:8080/cassettes"),
-                    fetch("http://localhost:8080/cranksets"),
-                    fetch("http://localhost:8080/tyres"),
+                    fetch(`${hostname}:8080/cassettes`),
+                    fetch(`${hostname}:8080/cranksets`),
+                    fetch(`${hostname}:8080/tyres`),
                 ]);
 
                 const [cassetteData, chainringData, tyreData] = await Promise.all([
@@ -165,20 +168,20 @@ const Rollout = () => {
     }, [chainringSelection, cassetteSelection, manualChainring, manualCassette]);
 
     return (
-        <div>
+        <div className="overflow-x-hidden">
             <h1 className="mb-12 !text-[60px] font-medium p-4 text-black text-center">
                 Rollout
             </h1>
 
-            <div className="text-white px-6 py-4 w-4/5 mx-auto text-center mb-20 input-background">
+            <div className="text-white px-4 py-4 w-full max-w-[700px] mx-auto text-center mb-20 input-background rounded-xl">
 
-                <fieldset className="w-fit inline-block mb-4 align-top">
+                <fieldset className="w-full md:w-fit inline-block mb-4 align-top px-2 text-left">
                     Tyre Selection:
                     <br/>
                     <select
                         value={tyreSelection}
                         onChange={(e) => setTyreSelection(e.target.value)}
-                        className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                        className="w-full md:w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-200 text-lg md:text-base appearance-none"
                     >
                         <option defaultValue={true} disabled={true} value="0">-- Tyre --</option>
 
@@ -191,13 +194,13 @@ const Rollout = () => {
                     </select>
                 </fieldset>
 
-                <fieldset className="w-fit inline-block mb-4 align-top px-1">
+                <fieldset className="w-full md:w-fit inline-block mb-4 align-top px-2 text-left">
                     Chainring Selection:
                     <br />
                     <select
                         value={chainringSelection}
                         onChange={(e) => setChainringSelection(e.target.value)}
-                        className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                        className="w-full md:w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-200 text-lg md:text-base appearance-none"
                     >
                         <option value="0">-- Manual Input --</option>
                         {chainringOptions.map((chainring) => (
@@ -215,17 +218,17 @@ const Rollout = () => {
                         value={manualChainring}
                         onChange={(e) => setManualChainring(e.target.value)}
                         placeholder="Enter chainring teeth"
-                        className="text-xs w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                        className="w-full md:w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-200 text-lg md:text-base appearance-none"
                     />
                 </fieldset>
 
-                <fieldset className="w-fit inline-block mb-4 align-top  px-1">
+                <fieldset className="w-full md:w-fit inline-block mb-4 align-top px-2 text-left">
                     Cassette Selection:
                     <br />
                     <select
                         value={cassetteSelection}
                         onChange={(e) => setCassetteSelection(e.target.value)}
-                        className="flex-1 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                        className="w-full md:w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-200 text-lg md:text-base appearance-none"
                     >
                         <option value="0">-- Manual Input --</option>
                         {cassetteOptions.map((cassette) => (
@@ -243,7 +246,7 @@ const Rollout = () => {
                         value={manualCassette}
                         onChange={(e) => setManualCassette(e.target.value)}
                         placeholder="Enter cassette cogs (e.g., 11,12,13)"
-                        className="text-xs w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-400"
+                        className="w-full md:w-48 p-2 border border-blue-900 rounded bg-gray-700 text-gray-200 text-lg md:text-base appearance-none"
                     />
                 </fieldset>
 
@@ -256,7 +259,7 @@ const Rollout = () => {
                     </button>
                     <button
                         onClick={handleSubmit}
-                        className="mt-4 bg-gray-400 min-w-36 text-white py-2 px-5 rounded shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all mx-5"
+                        className="mt-4 bg-gray-400 min-w-36 text-white py-2 px-5 rounded shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all"
                     >
                         Submit
                     </button>
