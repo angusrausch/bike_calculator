@@ -16,6 +16,7 @@ export default function BodyBackground() {
         case "/speed":
         case "/rollout":
         case "/ratios":
+        case "/map":
             bg = "url('/calcbackground.jpeg')";
             break;
       default:

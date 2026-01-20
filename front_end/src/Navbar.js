@@ -45,6 +45,12 @@ const Navbar = () => {
                 <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Rollout</span>
             </a>
             </li>
+            <li>
+            <a href="/map" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
+                <i className="fa-solid fa-map fa-fw w-12 text-center text-2xl"></i>
+                <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Map</span>
+            </a>
+            </li>
         </ul>
     );
 

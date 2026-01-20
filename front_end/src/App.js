@@ -7,6 +7,7 @@ import Home from './Home';
 import Ratio from './Ratio';
 import Rollout from './Rollout';
 import Speed from './Speed';
+import Map from './Map';
 import BodyBackground from './BodyBackground';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
             <Route path='/ratios' element={<Ratio/>}/>
             <Route path='/rollout' element={<Rollout/>}/>
             <Route path='/speed' element={<Speed/>}/>
+            <Route path='/map' element={<Map/>}/>
           </Routes>
         </div>
       </BrowserRouter>
