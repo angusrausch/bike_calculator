@@ -13,8 +13,6 @@ const TapRackMap = () => {
 
     const hostname = `${window.location.protocol}//${window.location.hostname}`
 
-    let last_message_update = 0;
-
     const SC_TAPS_TYPE = {
         WO02: "Drinking Fountain",
         WO05: "Tap",
@@ -163,6 +161,51 @@ const TapRackMap = () => {
             }).catch(console.error);
     };
 
+    const addLocationButton = (map) => {
+        if (!window.google || !window.google.maps) return;
+
+        const controlDiv = document.createElement("div");
+        const controlUI = document.createElement("button");
+
+        controlUI.style.backgroundColor = "#fff";
+        controlUI.style.border = "none";
+        controlUI.style.width = "40px";
+        controlUI.style.height = "40px";
+        controlUI.style.borderRadius = "2px";
+        controlUI.style.boxShadow = "0 1px 4px rgba(0,0,0,0.3)";
+        controlUI.style.cursor = "pointer";
+        controlUI.style.marginRight = "10px";
+        controlUI.title = "Your Location";
+        
+        controlUI.innerHTML = `
+            <div style="display: flex; align-items: center; justify-content: center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle>
+                    <line x1="12" y1="1" x2="12" y2="4"></line><line x1="12" y1="20" x2="12" y2="23"></line>
+                    <line x1="1" y1="12" x2="4" y2="12"></line><line x1="20" y1="12" x2="23" y2="12"></line>
+                </svg>
+            </div>`;
+
+        controlUI.addEventListener("click", () => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    map.setCenter({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    });
+                    map.setZoom(17);
+                });
+            }
+        });
+
+        controlDiv.appendChild(controlUI);
+
+        const position = window.google.maps.ControlPosition 
+            ? window.google.maps.ControlPosition.RIGHT_BOTTOM 
+            : 9;
+
+        map.controls[position].push(controlDiv);
+    };
 
     useEffect(() => {
         fetch(`${hostname}:8080/get-google-maps-key`)
@@ -190,6 +233,22 @@ const TapRackMap = () => {
                 streetViewControl: false
             });
 
+            addLocationButton(map);
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    map.setCenter(userLocation);
+                    new window.google.maps.Marker({
+                        position: userLocation,
+                        map: map,
+                    });
+                });
+            }
+
             googleMapInstance.current = map;
 
             map.addListener('idle', () => {
@@ -214,7 +273,6 @@ const TapRackMap = () => {
         return () => window.removeEventListener('resize', setMapVH);
     }, []);
 
-    // Mobile detection (max-width: 767px)
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 767);
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 767);
