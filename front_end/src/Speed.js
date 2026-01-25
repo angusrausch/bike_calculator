@@ -25,6 +25,11 @@ const Speed = () => {
     const [units, setUnits] = useState(unitOptions.METRIC);
     const [unitsCalculator, setUnitsCalculator] = useState(1);
 
+    const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+    if (!API_BASE_URL) {
+        throw new Error("REACT_APP_API_BASE_URL environment variable is not set.");
+    }
+
     const hostname = `${window.location.protocol}//${window.location.hostname}`
 
 
@@ -85,7 +90,7 @@ const Speed = () => {
     const loadCalculations = async (params) => {
         try {
             const response = await fetch(
-                `${hostname}:8080/calculate/speed?${params}`
+                `${API_BASE_URL}/api/calculate/speed?${params}`
             );
 
             const newUrl = `${window.location.pathname}?${params}`;
@@ -128,9 +133,9 @@ const Speed = () => {
         const loadData = async () => {
             try {
                 const [cassetteRes, chainringRes, tyresRes] = await Promise.all([
-                    fetch(`${hostname}:8080/cassettes`),
-                    fetch(`${hostname}:8080/cranksets`),
-                    fetch(`${hostname}:8080/tyres`),
+                    fetch(`${API_BASE_URL}/api/cassettes`),
+                    fetch(`${API_BASE_URL}/api/cranksets`),
+                    fetch(`${API_BASE_URL}/api/tyres`),
                 ]);
 
                 const [cassetteData, chainringData, tyreData] = await Promise.all([

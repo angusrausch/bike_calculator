@@ -12,6 +12,10 @@ const TapRackMap = () => {
     const [error, setError] = useState(null);
 
     const hostname = `${window.location.protocol}//${window.location.hostname}`;
+    const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+    if (!API_BASE_URL) {
+        throw new Error("REACT_APP_API_BASE_URL environment variable is not set.");
+    }
 
     const SC_TAPS_TYPE = {
         WO02: "Drinking Fountain",
@@ -207,7 +211,7 @@ const TapRackMap = () => {
     };
 
     useEffect(() => {
-        fetch(`${hostname}:8080/get-google-maps-key`)
+        fetch(`${API_BASE_URL}/api/get-google-maps-key`)
             .then(res => {
                 if (!res.ok) throw new Error("Network response was not ok");
                 return res.json();

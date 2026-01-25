@@ -9,10 +9,8 @@ const Home = () => {
                 I created this out of passion for the sport. Containing a number of calculators which I believe are a necessity when working out gear ratios.<br />
                 A number of these used to be available on other websites but with updates they have disappeared or become harder to use.<br />
                 <br />
-                I have also added additional features such as Strava integration, which really doesn't add much over just navigating to their website.<br />
                 My favourite piece of functionality is only useful to Brisbane residents with a map of the inner city bike racks and greater Brisbane area taps.<br />
                 <br />
-                Always appreciate any feedback, please submit it <a href="feedback">here</a>
             </div>
 
             <div className="flex mx-auto justify-around flex-wrap max-w-[1200px] w-full p-2.5 items-stretch">

@@ -26,36 +26,36 @@ public class CalculatorController {
     @Autowired
     private TyreRepo tyreRepo;
 
-    @GetMapping("cassettes")
+    @GetMapping("/api/cassettes")
     public List<Cassette> getAllCassettes() {
         return cassetteRepo.findAll();
     }
 
-    @GetMapping("cranksets")
+    @GetMapping("/api/cranksets")
     public List<Crankset> getAllCranksets() {
         return cranksetRepo.findAll();
     }
 
-    @GetMapping("tyres")
+    @GetMapping("/api/tyres")
     public List<Tyre> getAllTyres() {
         return tyreRepo.findAll();
     }
 
-    @GetMapping("cassettes/{id}")
+    @GetMapping("/api/cassettes/{id}")
     public ResponseEntity<Cassette> getCassette(@PathVariable long id) {
         return cassetteRepo.findById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("cranksets/{id}")
+    @GetMapping("/api/cranksets/{id}")
     public ResponseEntity<Crankset> getCrankset(@PathVariable long id) {
         return cranksetRepo.findById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    @GetMapping("tyres/{id}")
+    @GetMapping("/api/tyres/{id}")
     public ResponseEntity<Tyre> getTyre(@PathVariable long id) {
         return tyreRepo.findById(id)
                 .map(ResponseEntity::ok)
@@ -70,7 +70,7 @@ public class CalculatorController {
                 ));
     }
 
-    @GetMapping("calculate/ratio")
+    @GetMapping("/api/calculate/ratio")
     public ResponseEntity<ResultResponse> calculateRatio(
             @RequestParam(defaultValue = "0") Long cassette_id,
             @RequestParam(defaultValue = "0") Long crankset_id,
@@ -107,7 +107,7 @@ public class CalculatorController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("calculate/rollout")
+    @GetMapping("/api/calculate/rollout")
     public ResponseEntity<ResultResponse> calculateRollout(
             @RequestParam(defaultValue = "0") Long cassette_id,
             @RequestParam(defaultValue = "0") Long crankset_id,
@@ -147,7 +147,7 @@ public class CalculatorController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("calculate/speed")
+    @GetMapping("/api/calculate/speed")
     public ResponseEntity<ResultResponse> calculateSpeed(
             @RequestParam(defaultValue = "0") Long cassette_id,
             @RequestParam(defaultValue = "0") Long crankset_id,

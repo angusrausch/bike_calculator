@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
+if (!API_BASE_URL) {
+    throw new Error("REACT_APP_API_BASE_URL environment variable is not set.");
+}
+
 const Ratio = () => {
     const [chainringSelection, setChainringSelection] = useState("0");
     const [manualChainring, setManualChainring] = useState("");
@@ -55,7 +60,7 @@ const Ratio = () => {
     const loadCalculations = async (params) => {
         try {
             const response = await fetch(
-                `${hostname}:8080/calculate/ratio?${params}`
+                `${API_BASE_URL}/api/calculate/ratio?${params}`
             );
 
             const newUrl = `${window.location.pathname}?${params}`;
@@ -84,8 +89,8 @@ const Ratio = () => {
         const loadData = async () => {
             try {
                 const [cassetteRes, chainringRes] = await Promise.all([
-                    fetch(`${hostname}:8080/cassettes`),
-                    fetch(`${hostname}:8080/cranksets`),
+                    fetch(`${API_BASE_URL}/api/cassettes`),
+                    fetch(`${API_BASE_URL}/api/cranksets`),
                 ]);
 
                 const [cassetteData, chainringData] = await Promise.all([

@@ -4,3 +4,7 @@ spring.datasource.url=jdbc:postgresql://localhost:5432/bike_calculator
 spring.datasource.username=bikecalc
 spring.datasource.password=password
 spring.jpa.hibernate.ddl-auto=update
+
+server.port=8080
+
+google.maps.key=?
