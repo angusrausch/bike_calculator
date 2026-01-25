@@ -213,11 +213,17 @@ const TapRackMap = () => {
                 return res.json();
             })
             .then(data => {
-                const script = document.createElement('script');
-                script.src = `https://maps.googleapis.com/maps/api/js?key=${data.google_maps_key}&libraries=geometry`;
-                script.async = true;
-                script.onload = () => initMap();
-                document.body.appendChild(script);
+                const scriptId = 'google-maps-api-script';
+                if (!document.getElementById(scriptId)) {
+                    const script = document.createElement('script');
+                    script.id = scriptId;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${data.google_maps_key}&libraries=geometry`;
+                    script.async = true;
+                    script.onload = () => initMap();
+                    document.body.appendChild(script);
+                } else if (window.google && window.google.maps) {
+                    initMap();
+                }
             })
             .catch(err => {
                 console.error("CORS or Fetch error:", err);
@@ -336,10 +342,7 @@ const TapRackMap = () => {
                 </div>
 
                 <div className={`mt-4 space-y-1 ${isMobile ? "hidden" : ""}`}>
-                    <small className="block">Data from <a href="https://www.brisbane.qld.gov.au/business-in-brisbane/business-opportunities/open-data" className="text-blue-600 underline">Brisbane Open Data</a></small>
-                    <small className="block">Data from <a href="https://www.goldcoast.qld.gov.au/About-our-city/Digital-connectivity/Data-intelligence/City-of-Gold-Coast-Data-Portal" className="text-blue-600 underline">City of Gold Coast Data Portal</a></small>
-                    <small className="block">Data from <a href="https://datahub.moretonbay.qld.gov.au" className="text-blue-600 underline">Datahub City of Moreton Bay</a></small>
-                    <small className="block">Data from <a href="https://data.sunshinecoast.qld.gov.au" className="text-blue-600 underline">Open Data Sunshine Coast Council</a></small>
+                    <small className="block">Data from <a href="https://www.brisbane.qld.gov.au/business-in-brisbane/business-opportunities/open-data" className="text-blue-600 underline">Brisbane Open Data</a>, <a href="https://www.goldcoast.qld.gov.au/About-our-city/Digital-connectivity/Data-intelligence/City-of-Gold-Coast-Data-Portal" className="text-blue-600 underline">City of Gold Coast Data Portal</a>, <a href="https://datahub.moretonbay.qld.gov.au" className="text-blue-600 underline">Datahub City of Moreton Bay</a>, <a href="https://data.sunshinecoast.qld.gov.au" className="text-blue-600 underline">Open Data Sunshine Coast Council</a></small>
                 </div>
             </div>
         </div>
