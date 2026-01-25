@@ -11,14 +11,13 @@ const TapRackMap = () => {
     const [racksMessage, setRacksMessage] = useState("");
     const [error, setError] = useState(null);
 
-    const hostname = `${window.location.protocol}//${window.location.hostname}`
+    const hostname = `${window.location.protocol}//${window.location.hostname}`;
 
     const SC_TAPS_TYPE = {
         WO02: "Drinking Fountain",
         WO05: "Tap",
         WO06: "Bottle Refill Station"
     };
-
 
     const lonLatToWebMercator = (lon, lat) => {
         const RADIUS = 6378137.0;
@@ -176,7 +175,7 @@ const TapRackMap = () => {
         controlUI.style.cursor = "pointer";
         controlUI.style.marginRight = "10px";
         controlUI.title = "Your Location";
-        
+
         controlUI.innerHTML = `
             <div style="display: flex; align-items: center; justify-content: center;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -235,7 +234,15 @@ const TapRackMap = () => {
 
             addLocationButton(map);
 
-            if (navigator.geolocation) {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("lng") && params.has("lat") && params.has("zoom")) {
+                const paramsLocation = {
+                    lat: parseFloat(params.get("lat")),
+                    lng: parseFloat(params.get("lng"))
+                };
+                map.setCenter(paramsLocation);
+                map.setZoom(parseFloat(params.get("zoom")));
+            } else if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
                     const userLocation = {
                         lat: position.coords.latitude,
@@ -255,7 +262,13 @@ const TapRackMap = () => {
                 const bounds = map.getBounds();
                 const ne = bounds.getNorthEast();
                 const sw = bounds.getSouthWest();
+
                 fetchData([ne.lat(), sw.lat()], [sw.lng(), ne.lng()]);
+
+                const center = map.getCenter();
+                const zoom = map.getZoom();
+                const params = new URLSearchParams({ lat: center.lat(), lng: center.lng(), zoom });
+                window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
             });
         };
     }, []);
