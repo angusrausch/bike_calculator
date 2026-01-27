@@ -17,8 +17,6 @@ const Ratio = () => {
     const [chainrings, setChainrings] = useState([]);
     const [results, setResults] = useState([]);
 
-    const hostname = `${window.location.protocol}//${window.location.hostname}`
-
     const handleSubmit = async () => {
         setError("");
 

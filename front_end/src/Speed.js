@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const Speed = () => {
     const [tyreSelection, setTyreSelection] = useState("0");
@@ -29,9 +29,6 @@ const Speed = () => {
     if (!API_BASE_URL) {
         throw new Error("REACT_APP_API_BASE_URL environment variable is not set.");
     }
-
-    const hostname = `${window.location.protocol}//${window.location.hostname}`
-
 
     const handleSubmit = async () => {
         setError("");
@@ -87,7 +84,7 @@ const Speed = () => {
         await loadCalculations(params);
     };
 
-    const loadCalculations = async (params) => {
+    const loadCalculations = useCallback(async (params) => {
         try {
             const response = await fetch(
                 `${API_BASE_URL}/api/calculate/speed?${params}`
@@ -112,7 +109,7 @@ const Speed = () => {
             console.error("Failed to fetch calculations:", error);
             throw error;
         }
-    };
+    }, [API_BASE_URL]);
 
     const checkValid = (input) => {
         if (/^[0-9,]*$/.test(input)) return true;
@@ -158,7 +155,7 @@ const Speed = () => {
         };
 
         loadData();
-    }, []);
+    }, [API_BASE_URL]);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -192,7 +189,7 @@ const Speed = () => {
         if (hasChainring && hasCassette && hasTyre) {
             loadCalculations(params);
         }
-    }, [chainringSelection, cassetteSelection, manualChainring, manualCassette]);
+    }, [chainringSelection, cassetteSelection, manualChainring, manualCassette, loadCalculations]);
 
 
     return (

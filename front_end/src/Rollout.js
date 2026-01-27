@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 const Rollout = () => {
     const [tyreSelection, setTyreSelection] = useState("0");
@@ -25,9 +25,6 @@ const Rollout = () => {
     if (!API_BASE_URL) {
         throw new Error("REACT_APP_API_BASE_URL environment variable is not set.");
     }
-
-    const hostname = `${window.location.protocol}//${window.location.hostname}`
-
 
     const handleSubmit = async () => {
         setError("");
@@ -74,7 +71,7 @@ const Rollout = () => {
         await loadCalculations(params);
     };
 
-    const loadCalculations = async (params) => {
+    const loadCalculations = useCallback(async (params) => {
         try {
             const response = await fetch(
                 `${API_BASE_URL}/api/calculate/rollout?${params}`
@@ -96,7 +93,7 @@ const Rollout = () => {
             console.error("Failed to fetch calculations:", error);
             throw error;
         }
-    }
+    }, [API_BASE_URL]);
 
     const checkValid = (input) => {
         if (/^[0-9,]*$/.test(input)) return true;
@@ -142,7 +139,7 @@ const Rollout = () => {
         };
 
         loadData();
-    }, []);
+    }, [API_BASE_URL]);
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -170,7 +167,7 @@ const Rollout = () => {
         if (hasChainring && hasCassette && hasTyre) {
             loadCalculations(params);
         }
-    }, [chainringSelection, cassetteSelection, manualChainring, manualCassette]);
+    }, [chainringSelection, cassetteSelection, manualChainring, manualCassette, loadCalculations]);
 
     return (
         <div className="overflow-x-hidden">

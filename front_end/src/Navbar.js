@@ -6,17 +6,13 @@ const Navbar = () => {
     const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
     const changeSideBar = () => {
-        if (navbarWidth == "w-64") {
+        if (navbarWidth === "w-64") {
             setNavbarWidth("w-20");
             setLinkTextDisplay("hidden");
         } else {
             setNavbarWidth("w-64");
             setLinkTextDisplay("show");
         }
-    }
-
-    const changeMobileSideBar = () => {
-        
     }
 
     const navbar = (

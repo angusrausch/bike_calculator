@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+
+const SC_TAPS_TYPE = {
+        WO02: "Drinking Fountain",
+        WO05: "Tap",
+        WO06: "Bottle Refill Station"
+    };
 
 const TapRackMap = () => {
     const mapRef = useRef(null);
@@ -11,17 +17,10 @@ const TapRackMap = () => {
     const [racksMessage, setRacksMessage] = useState("");
     const [error, setError] = useState(null);
 
-    const hostname = `${window.location.protocol}//${window.location.hostname}`;
     const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
     if (!API_BASE_URL) {
         throw new Error("REACT_APP_API_BASE_URL environment variable is not set.");
     }
-
-    const SC_TAPS_TYPE = {
-        WO02: "Drinking Fountain",
-        WO05: "Tap",
-        WO06: "Bottle Refill Station"
-    };
 
     const lonLatToWebMercator = (lon, lat) => {
         const RADIUS = 6378137.0;
@@ -53,7 +52,7 @@ const TapRackMap = () => {
         return marker;
     };
 
-    const placeTap = (tap) => {
+    const placeTap = useCallback((tap) => {
         const tapMap = tapMapRef.current;
         if (tap.geometry) { // SC, MB & GC API
             if (tap.attributes.FeatureTypeCode) {
@@ -82,16 +81,16 @@ const TapRackMap = () => {
                 tapMap.set(tap.objectid, marker);
             }
         }
-    };
+    }, []);
 
-    const placeRack = (rack) => {
+    const placeRack = useCallback((rack) => {
         const rackMap = rackMapRef.current;
         const key = rack.latitude * rack.longitude * rack.capacity;
         if (!rackMap.has(key)) {
             const marker = createMarker(parseFloat(rack.latitude), parseFloat(rack.longitude), 'R', `<strong>${rack.rack_type} - Capacity: ${rack.capacity}</strong><br><small>${rack.location}</small>`);
             rackMap.set(key, marker);
         }
-    };
+    }, []);
 
     const checkMarkerNumbers = () => {
         if (tapMapRef.current.size > 450) {
@@ -104,7 +103,7 @@ const TapRackMap = () => {
         }
     };
 
-    const fetchData = async (lat, lon) => {
+    const fetchData = useCallback(async (lat, lon) => {
         const [left, right] = lon;
         const [top, bottom] = lat;
         checkMarkerNumbers();
@@ -162,7 +161,7 @@ const TapRackMap = () => {
                 data.results.forEach(placeRack);
                 setRacksMessage(data.results.length < 100 ? "" : "Map too large. Zoom in to display all racks");
             }).catch(console.error);
-    };
+    }, [placeTap, placeRack]);
 
     const addLocationButton = (map) => {
         if (!window.google || !window.google.maps) return;
@@ -288,7 +287,7 @@ const TapRackMap = () => {
                 window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
             });
         };
-    }, []);
+    }, [API_BASE_URL, fetchData]);
 
     // Viewport height adjustment for mobile
     useEffect(() => {
