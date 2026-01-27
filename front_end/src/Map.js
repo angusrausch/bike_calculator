@@ -191,13 +191,20 @@ const TapRackMap = () => {
 
         controlUI.addEventListener("click", () => {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    map.setCenter({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    });
-                    map.setZoom(17);
-                });
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        map.setCenter({
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        });
+                        map.setZoom(17);
+                    },
+                    (err) => {
+                        alert("Unable to access location. Please check your browser permissions and use HTTPS.");
+                    }
+                );
+            } else {
+                alert("Geolocation is not supported by this browser.");
             }
         });
 
@@ -307,10 +314,9 @@ const TapRackMap = () => {
         <div className={`min-h-screen bg-black bg-cover ${isMobile ? '' : ''}`} style={{ backgroundImage: "url('/static/calc/images/calc-background.jpeg')" }}>
             <div
                 className={
-                    `p-4 md:p-12 padded-outer` +
                     (isMobile
                         ? " fixed inset-0 z-40 p-0 m-0 bg-black/85 flex flex-col"
-                        : " bg-[rgba(179,180,189,0.8)]")
+                        : " bg-[rgba(179,180,189,0.8)] p-4 md:p-12 padded-outer")
                 }
             >
                 {error && (
@@ -329,8 +335,10 @@ const TapRackMap = () => {
 
                 <div
                     className={
-                        `bg-white p-2 text-black rounded-lg mt-4 shadow-xl` +
-                        (isMobile ? " bg-transparent flex-1 p-0 m-0" : "")
+                        (isMobile 
+                            ? " bg-transparent flex-1 p-0 m-0" 
+                            : "bg-white p-2 text-black rounded-lg mt-4 shadow-xl"
+                        )
                     }
                 >
                     <div
