@@ -22,10 +22,12 @@ Other inovations have occured as well. Need to find your closest tap to refill y
 
 ---
 ## Prerequisites
+
 **For  Development:**
 - Node V22
 - Java (OpenJDK) 25
 - PostgreSQL
+
 **For Production:**
 - Docker
 
@@ -42,21 +44,17 @@ Other inovations have occured as well. Need to find your closest tap to refill y
       ```
 
 - Setup Server Properties
-   - Copy properties example files
+   - Copy `.env` example files
       ```bash
-      cp back_end/src/main/resources/application.properties.example back_end/src/main/resources/application.properties
+      cp back_end/.env.example back_end/.env
       cp front_end/.env.example front_end/.env
       ```
-   - Modify backend `application.properties`
-      - Update following values:
-         - spring.datasource.url 
-            - This has to equal `jdbc:postgresql://*`
-         - spring.datasource.username
-         - spring.datasource.password
-         - server.port
-         - google.maps.key
+   - Modify backend `backend/.env`
+      - Update values:
+         - **Note** `SPRING_DATASOURCE_URL` must begin with `jdbc:postgresql://*`
+
    - Modify frontend `.env`
-      - Update `REACT_APP_API_BASE_URL` to match address for `application.properties/server.port`
+      - Update `REACT_APP_API_BASE_URL` to match address for backend port
          - Likely `localhost:8080` for development (default)
 
 --- 
@@ -65,7 +63,7 @@ Other inovations have occured as well. Need to find your closest tap to refill y
 - Start backend server
    - Run command:
       ```bash
-      ./mvnw spring-boot:run 
+      ./back_end/start.sh
       ```
    - This has to be closed and rerun after changes to code
 - Start frontend server

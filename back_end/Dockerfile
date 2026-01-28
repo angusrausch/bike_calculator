@@ -7,5 +7,10 @@ COPY mvnw pom.xml ./
 RUN ./mvnw dependency:go-offline
  
 COPY src ./src
- 
-CMD ["./mvnw", "spring-boot:run"]
+
+COPY .env /app/
+
+COPY start.sh /app/
+RUN chmod +x start.sh
+
+ENTRYPOINT [ "/app/start.sh" ]

@@ -15,6 +15,9 @@ START=false
 STOP=false
 NETWORK=""
 
+BACKEND=false
+FRONTEND=false
+
 show_usage() {
   echo "Usage: $0 [OPTIONS]"
   echo ""
@@ -45,6 +48,14 @@ while [[ $# -gt 0 ]]; do
       ;;
     --start)
       START=true
+      shift
+      ;;
+    --backend)
+      BACKEND=true
+      shift
+      ;;
+    --frontend)
+      FRONTEND=true
       shift
       ;;
     --net)
@@ -81,56 +92,80 @@ if $STOP; then
   exit 0
 fi
 
+if ! $BACKEND && ! $FRONTEND; then 
+  echo -e "\n${RED}No container selected to build or start${NC}"
+  exit 1
+fi
+
 if $BUILD; then
   echo -e "\n${GREEN}Building Images${NC}\n"
-  docker build -t bike_calculator_backend ./back_end/
-  docker build -t bike_calculator_frontend ./front_end/
+  if $BACKEND; then
+    echo -e "\n${YELLOW}Building Backend Image...${NC}"
+    docker build -t bike_calculator_backend ./back_end/
+    if [[ $? -ne 0 ]]; then
+      echo "${RED}Building backend docker image failed $STATUS${NC}"
+      exit 1
+    fi
+  fi
+
+  if $FRONTEND; then
+    echo -e "\n${YELLOW}Building Frontend Image...${NC}"
+    docker build -t bike_calculator_frontend ./front_end/
+    if [[ $? -ne 0 ]]; then
+      echo "${RED}Building frontend docker image failed $STATUS${NC}"
+      exit 1
+    fi
+  fi
 fi
 
 if $START; then
-  echo -e "\n"
-  if docker ps | egrep "bike_calculator_backend" > /dev/null 2>&1; then
-    echo -e "${YELLOW}Old backend containers found. Shutting it down...${NC}"
-    docker rm -f bike_calculator_backend >/dev/null 2>&1
+  if $BACKEND; then
+    echo -e "\n${YELLOW}Starting Backend Container...${CYAN}"
+
+    if docker ps | egrep "bike_calculator_backend" > /dev/null 2>&1; then
+      echo -e "${YELLOW}Old backend containers found. Shutting it down...${NC}"
+      docker rm -f bike_calculator_backend >/dev/null 2>&1
+      if [[ $? -ne 0 ]]; then
+        echo "${RED}Removing backend docker container failed $STATUS${NC}"
+        exit 1
+      fi
+      echo -e "${GREEN}Backend docker container shut down.${NC}"
+    fi
+
+    docker run ${NETWORK} --name bike_calculator_backend \
+          -p 8080:8080 \
+          --restart unless-stopped \
+          -d bike_calculator_backend
     if [[ $? -ne 0 ]]; then
-      echo "${RED}Removing backend docker container failed $STATUS${NC}"
+      echo "${RED}Starting Backend docker container failed $STATUS${NC}"
       exit 1
     fi
-    echo -e "${GREEN}Backend docker container shut down.${NC}"
+    echo -e "${BLUE}Started Backend container${NC}"
   fi
 
-  if docker ps | egrep "bike_calculator_frontend" > /dev/null 2>&1; then
-    echo -e "${YELLOW}Old frontend containers found. Shutting it down...${NC}"
-    docker rm -f bike_calculator_frontend >/dev/null 2>&1
+  if $FRONTEND; then
+    echo -e "\n${YELLOW}Starting Frontend docker container...${CYAN}"
+    
+    if docker ps | egrep "bike_calculator_frontend" > /dev/null 2>&1; then
+      echo -e "${YELLOW}Old frontend containers found. Shutting it down...${NC}"
+      docker rm -f bike_calculator_frontend >/dev/null 2>&1
+      if [[ $? -ne 0 ]]; then
+        echo "${RED}Removing frontend docker container failed $STATUS${NC}"
+        exit 1
+      fi
+      echo -e "${GREEN}Frontend docker container shut down.${NC}"
+    fi
+
+    docker run --name bike_calculator_frontend \
+          -p 3000:80 \
+          --restart unless-stopped \
+          -d bike_calculator_frontend
     if [[ $? -ne 0 ]]; then
-      echo "${RED}Removing frontend docker container failed $STATUS${NC}"
+      echo "${RED}Starting Frontend docker container failed $STATUS${NC}"
       exit 1
     fi
-    echo -e "${GREEN}Frontend docker container shut down.${NC}"
+    echo -e "${BLUE}Started Frontend container${NC}"
   fi
-
-  echo -e "\n${YELLOW}Starting Backend docker container...${CYAN}"
-  docker run ${NETWORK} --name bike_calculator_backend \
-        -p 8080:8080 \
-        --restart unless-stopped \
-        -d bike_calculator_backend
-  if [[ $? -ne 0 ]]; then
-    echo "${RED}Starting Backend docker container failed $STATUS${NC}"
-    exit 1
-  fi
-  echo -e "${BLUE}Started Backend container${NC}"
-
-  echo -e "\n${YELLOW}Starting Frontend docker container...${CYAN}"
-  docker run --name bike_calculator_frontend \
-        -p 3000:80 \
-        --restart unless-stopped \
-        -d bike_calculator_frontend
-  if [[ $? -ne 0 ]]; then
-    echo "${RED}Starting Backend docker container failed $STATUS${NC}"
-    exit 1
-  fi
-  echo -e "${BLUE}Started Backend container${NC}"
-  
 fi
 
 exit 0
