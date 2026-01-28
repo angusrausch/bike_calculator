@@ -1,0 +1,32 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "bike_calculator_backend",
+  "main": "index.ts",
+  "compatibility_date":"2026-01-28",
+  "assets": {
+    "directory": "./"
+  },
+  "containers": [
+    {
+      "max_instances": 1,
+      "class_name": "MyContainer",
+      "image": "./Dockerfile"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "MY_CONTAINER",
+        "class_name": "MyContainer"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": [
+        "MyContainer"
+      ]
+    }
+  ]
+}
