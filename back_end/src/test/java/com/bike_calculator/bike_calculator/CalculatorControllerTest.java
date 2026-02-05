@@ -1,6 +1,7 @@
 package com.bike_calculator.bike_calculator;
 
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -99,5 +100,73 @@ class CalculatorControllerTest {
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
         assertNotNull(response);
         assertEquals(tyreRepo.findById(1L).get().getName(), (String) response.get("name"));
+    }
+
+    @Test
+    void testGetRatio() {
+        Crankset crankset = cranksetRepo.findById(1L).get();
+        Cassette cassette = cassetteRepo.findById(1L).get();
+
+        String params = "?crankset_id=" + cassette.getId() + "&cassette_id=" + crankset.getId();
+        String url = "http://localhost:" + port + "/api/calculate/ratio" + params;
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        assertNotNull(response);
+        assertEquals(crankset.getRings(), response.get("chainrings"));
+        assertEquals(cassette.getSprockets(), response.get("sprockets"));
+
+        Calculation calc = new Calculation(cassette, crankset);
+        List<List<Double>> result = calc.getRatio();
+        assertEquals(result, response.get("results"));
+    }
+
+    @Test
+    void testGetRollout() {
+        Crankset crankset = cranksetRepo.findById(1L).get();
+        Cassette cassette = cassetteRepo.findById(1L).get();
+        Tyre tyre = tyreRepo.findById(1L).get();
+
+        String params = "?crankset_id=" + cassette.getId() + "&cassette_id=" + crankset.getId() + "&tyre_id=" + tyre.getId();
+        String url = "http://localhost:" + port + "/api/calculate/rollout" + params;
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        assertNotNull(response);
+        assertEquals(crankset.getRings(), response.get("chainrings"));
+        assertEquals(cassette.getSprockets(), response.get("sprockets"));
+
+        Calculation calc = new Calculation(cassette, crankset, tyre);
+        List<List<Double>> result = calc.getRollout();
+        assertEquals(result, response.get("results"));
+    }
+
+    @Test
+    void testGetSpeed() {
+        Crankset crankset = cranksetRepo.findById(1L).get();
+        Cassette cassette = cassetteRepo.findById(1L).get();
+        Tyre tyre = tyreRepo.findById(1L).get();
+        int minCadence = 60;
+        int maxCadence = 100;
+        int cadenceInc = 10;
+
+        String cadenceParams = "&min_cadence=" + minCadence + "&max_cadence=" + maxCadence + "&cadence_increment=" + cadenceInc;
+        String params = "?crankset_id=" + cassette.getId() + "&cassette_id=" + crankset.getId() + "&tyre_id=" + tyre.getId() + cadenceParams;
+        String url = "http://localhost:" + port + "/api/calculate/speed" + params;
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        assertNotNull(response);
+        assertEquals(crankset.getRings(), response.get("chainrings"));
+        assertEquals(cassette.getSprockets(), response.get("sprockets"));
+
+        List<Integer> cadenceList = new ArrayList<>();
+        for (int i = minCadence; i <= maxCadence; i += cadenceInc) {
+            cadenceList.add(i);
+        }
+        assertEquals(cadenceList, response.get("cadences"));
+
+        Calculation calc = new Calculation(cassette, crankset, tyre, cadenceList);
+        List<List<Double>> result = calc.getSpeed();
+        assertEquals(result, response.get("results"));
+
     }
 }
