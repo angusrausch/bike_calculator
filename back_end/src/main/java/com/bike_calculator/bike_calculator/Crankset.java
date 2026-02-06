@@ -40,16 +40,4 @@ public class Crankset {
     public String getName() { return name; }
     public List<Integer> getRings() { return rings; }
     public int getSpeed() { return rings != null ? rings.size() : 0; }
-
-    public int getLarge() { return rings != null && !rings.isEmpty() ? rings.get(rings.size() - 1) : 0; }
-    public int getSmall() { return rings != null && !rings.isEmpty() ? rings.get(0) : 0; }
-    public int getMiddle() {
-        if (rings != null && rings.size() == 3) {
-            return rings.get(1);
-        } else if (rings != null && !rings.isEmpty()) {
-            return rings.get(rings.size() - 1);
-        } else {
-            return 0;
-        }
-    }
 }

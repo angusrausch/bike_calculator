@@ -21,8 +21,6 @@ public class ResultResponse {
         this.cadences = cadences;
     }
 
-    
-
     public List<List<Double>> getResults() {
         return result;
     }
