@@ -70,6 +70,30 @@ public class CalculatorController {
                 ));
     }
 
+    private Cassette identifyCassette(Long id, String manualCassette) {
+        if (id != 0) {
+            return findRequiredEntity(cassetteRepo, id, "Cassette");
+        } else {
+            List<Integer> cassetteSprockets = java.util.Arrays.stream(manualCassette.split(","))
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toList());
+            return new Cassette("Manual", cassetteSprockets);
+        }
+    }
+
+    private Crankset identifyCrankset(Long id, String manualCrankset) {
+        if (id != 0) {
+            return findRequiredEntity(cranksetRepo, id, "Crankset");
+        } else {
+            List<Integer> cranksetRings = java.util.Arrays.stream(manualCrankset.split(","))
+                    .map(String::trim)
+                    .map(Integer::parseInt)
+                    .collect(Collectors.toList());
+            return new Crankset("Manual", cranksetRings);
+        }
+    }
+
     @GetMapping("/api/calculate/ratio")
     public ResponseEntity<ResultResponse> calculateRatio(
             @RequestParam(defaultValue = "0") Long cassette_id,
@@ -77,27 +101,8 @@ public class CalculatorController {
             @RequestParam(defaultValue = "") String manual_cassette,
             @RequestParam(defaultValue = "") String manual_chainring) {
 
-        Cassette cassette;
-        if (cassette_id != 0) {
-            cassette = findRequiredEntity(cassetteRepo, cassette_id, "Cassette");
-        } else {
-            List<Integer> cassetteSprockets = java.util.Arrays.stream(manual_cassette.split(","))
-                                      .map(String::trim)
-                                      .map(Integer::parseInt)
-                                      .collect(Collectors.toList());
-            cassette = new Cassette("Manual", cassetteSprockets);
-        }
-
-        Crankset crankset;
-        if (crankset_id != 0) {
-            crankset = findRequiredEntity(cranksetRepo, crankset_id, "Crankset");
-        } else {
-            List<Integer> cranksetRings = java.util.Arrays.stream(manual_chainring.split(","))
-                    .map(String::trim)
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toList());
-            crankset = new Crankset("Manual", cranksetRings);
-        }
+        Cassette cassette = identifyCassette(cassette_id, manual_cassette);
+        Crankset crankset = identifyCrankset(crankset_id, manual_chainring);
 
         Calculation calculation = new Calculation(cassette, crankset);
         List<List<Double>> result = calculation.getRatio();
@@ -115,27 +120,8 @@ public class CalculatorController {
             @RequestParam(defaultValue = "") String manual_cassette,
             @RequestParam(defaultValue = "") String manual_chainring) {
 
-        Cassette cassette;
-        if (cassette_id != 0) {
-            cassette = findRequiredEntity(cassetteRepo, cassette_id, "Cassette");
-        } else {
-            List<Integer> cassetteSprockets = java.util.Arrays.stream(manual_cassette.split(","))
-                    .map(String::trim)
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toList());
-            cassette = new Cassette("Manual", cassetteSprockets);
-        }
-
-        Crankset crankset;
-        if (crankset_id != 0) {
-            crankset = findRequiredEntity(cranksetRepo, crankset_id, "Crankset");
-        } else {
-            List<Integer> cranksetRings = java.util.Arrays.stream(manual_chainring.split(","))
-                    .map(String::trim)
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toList());
-            crankset = new Crankset("Manual", cranksetRings);
-        }
+        Cassette cassette = identifyCassette(cassette_id, manual_cassette);
+        Crankset crankset = identifyCrankset(crankset_id, manual_cassette);
 
         Tyre tyre = findRequiredEntity(tyreRepo, tyre_id, "Tyre");
 
@@ -158,28 +144,8 @@ public class CalculatorController {
             @RequestParam(defaultValue = "") String manual_cassette,
             @RequestParam(defaultValue = "") String manual_chainring) {
 
-        Cassette cassette;
-        if (cassette_id != 0) {
-            cassette = findRequiredEntity(cassetteRepo, cassette_id, "Cassette");
-        } else {
-            List<Integer> cassetteSprockets = java.util.Arrays.stream(manual_cassette.split(","))
-                    .map(String::trim)
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toList());
-            cassette = new Cassette("Manual", cassetteSprockets);
-        }
-
-        Crankset crankset;
-        if (crankset_id != 0) {
-            crankset = findRequiredEntity(cranksetRepo, crankset_id, "Crankset");
-        } else {
-            List<Integer> cranksetRings = java.util.Arrays.stream(manual_chainring.split(","))
-                    .map(String::trim)
-                    .map(Integer::parseInt)
-                    .collect(Collectors.toList());
-            crankset = new Crankset("Manual", cranksetRings);
-        }
-
+        Cassette cassette = identifyCassette(cassette_id, manual_cassette);
+        Crankset crankset = identifyCrankset(crankset_id, manual_chainring);
         Tyre tyre = findRequiredEntity(tyreRepo, tyre_id, "Tyre");
 
         List<Integer> cadenceList = new ArrayList<>();
