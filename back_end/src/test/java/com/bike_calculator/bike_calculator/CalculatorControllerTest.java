@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class CalculatorControllerTest {
@@ -107,8 +109,11 @@ class CalculatorControllerTest {
         Crankset crankset = cranksetRepo.findById(1L).get();
         Cassette cassette = cassetteRepo.findById(1L).get();
 
-        String params = "?crankset_id=" + cassette.getId() + "&cassette_id=" + crankset.getId();
-        String url = "http://localhost:" + port + "/api/calculate/ratio" + params;
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("http://localhost:" + port + "/api/calculate/ratio")
+            .queryParam("crankset_id", crankset.getId())
+            .queryParam("cassette_id", cassette.getId());
+        String url = builder.toUriString();
+
         @SuppressWarnings("unchecked")
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
         assertNotNull(response);
@@ -126,8 +131,12 @@ class CalculatorControllerTest {
         Cassette cassette = cassetteRepo.findById(1L).get();
         Tyre tyre = tyreRepo.findById(1L).get();
 
-        String params = "?crankset_id=" + cassette.getId() + "&cassette_id=" + crankset.getId() + "&tyre_id=" + tyre.getId();
-        String url = "http://localhost:" + port + "/api/calculate/rollout" + params;
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("http://localhost:" + port + "/api/calculate/rollout")
+            .queryParam("crankset_id", crankset.getId())
+            .queryParam("cassette_id", cassette.getId())
+            .queryParam("tyre_id", tyre.getId());
+        String url = builder.toUriString();
+
         @SuppressWarnings("unchecked")
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
         assertNotNull(response);
@@ -148,9 +157,14 @@ class CalculatorControllerTest {
         int maxCadence = 100;
         int cadenceInc = 10;
 
-        String cadenceParams = "&min_cadence=" + minCadence + "&max_cadence=" + maxCadence + "&cadence_increment=" + cadenceInc;
-        String params = "?crankset_id=" + cassette.getId() + "&cassette_id=" + crankset.getId() + "&tyre_id=" + tyre.getId() + cadenceParams;
-        String url = "http://localhost:" + port + "/api/calculate/speed" + params;
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("http://localhost:" + port + "/api/calculate/speed")
+            .queryParam("crankset_id", crankset.getId())
+            .queryParam("cassette_id", cassette.getId())
+            .queryParam("tyre_id", tyre.getId())
+            .queryParam("min_cadence", minCadence)
+            .queryParam("max_cadence", maxCadence)
+            .queryParam("cadence_increment", cadenceInc);
+        String url = builder.toUriString();
 
         @SuppressWarnings("unchecked")
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
@@ -167,6 +181,32 @@ class CalculatorControllerTest {
         Calculation calc = new Calculation(cassette, crankset, tyre, cadenceList);
         List<List<Double>> result = calc.getSpeed();
         assertEquals(result, response.get("results"));
+    }
 
+    @Test
+    void testGetManualRatio() {
+        // All three controllers use the same methods for manual cassette/crankset conversions. Only one test required
+        List<Integer> sprockets = Arrays.asList(10, 12);
+        Cassette cassette = new Cassette("Test Cassette", sprockets);
+        List<Integer> rings = Arrays.asList(20, 24);
+        Crankset crankset = new Crankset("Test Crankset", rings);
+
+        String manualChainring = rings.stream().map(String::valueOf).collect(Collectors.joining(","));
+        String manualCassette = sprockets.stream().map(String::valueOf).collect(Collectors.joining(","));
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("http://localhost:" + port + "/api/calculate/ratio")
+            .queryParam("manual_chainring", manualChainring)
+            .queryParam("manual_cassette", manualCassette);
+        String url = builder.toUriString();
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        assertNotNull(response);
+        assertEquals(crankset.getRings(), response.get("chainrings"));
+        assertEquals(cassette.getSprockets(), response.get("sprockets"));
+
+        Calculation calc = new Calculation(cassette, crankset);
+        List<List<Double>> result = calc.getRatio();
+        assertEquals(result, response.get("results"));
     }
 }
