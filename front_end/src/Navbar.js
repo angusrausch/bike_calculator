@@ -18,34 +18,40 @@ const Navbar = () => {
     const navbar = (
         <ul className="space-y-3">
             <li>
-            <a href="/" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
-                <i className="fa-solid fa-house fa-fw w-12 text-center text-2xl"></i>                        
-                <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Home</span>
-            </a>
+                <a href="/" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
+                    <i className="fa-solid fa-house fa-fw w-12 text-center text-2xl"></i>                        
+                    <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Home</span>
+                </a>
             </li>
             <li>
-            <a href="/speed" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
-                <i className="fa-solid fa-gauge-high fa-fw w-12 text-center text-2xl"></i>
-                <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Speed</span>
-            </a>
+                <a href="/speed" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
+                    <i className="fa-solid fa-gauge-high fa-fw w-12 text-center text-2xl"></i>
+                    <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Speed</span>
+                </a>
             </li>
             <li>
-            <a href="/ratios" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
-                <i className="fa-solid fa-gears fa-fw w-12 text-center text-2xl"></i>
-                <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Ratios</span>
-            </a>
+                <a href="/ratios" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
+                    <i className="fa-solid fa-gears fa-fw w-12 text-center text-2xl"></i>
+                    <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Ratios</span>
+                </a>
             </li>
             <li>
-            <a href="/rollout" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
-                <i className="fa-solid fa-tape fa-fw w-12 text-center text-2xl"></i>
-                <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Rollout</span>
-            </a>
+                <a href="/rollout" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
+                    <i className="fa-solid fa-tape fa-fw w-12 text-center text-2xl"></i>
+                    <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Rollout</span>
+                </a>
             </li>
             <li>
-            <a href="/map" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
-                <i className="fa-solid fa-map fa-fw w-12 text-center text-2xl"></i>
-                <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Map</span>
-            </a>
+                <a href="/map" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
+                    <i className="fa-solid fa-map fa-fw w-12 text-center text-2xl"></i>
+                    <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Map</span>
+                </a>
+            </li>
+            <li>
+                <a href="/strava" className="nav-link flex items-center justify-start p-3 text-gray-300 hover:bg-gray-700 rounded-md">
+                    <i className="fa-brands fa-strava fa-fw w-12 text-center text-2xl"></i>
+                    <span className={`ml-4 whitespace-nowrap text-lg font-medium ${linkTextDisplay}`}>Strava</span>
+                </a>
             </li>
         </ul>
     );
