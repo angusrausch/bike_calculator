@@ -9,21 +9,17 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    container:
-      image: openjdk:25-rc-jdk
-      options: --workdir /github/workspace
-
     defaults:
       run:
         working-directory: ./back_end
     steps:
     - uses: actions/checkout@v4
-    - name: Install Dependencies
-      run: |
-        ./mvnw install -DskipTests
-    - name: Build
-      run: |
-        ./mvnw compile
     - name: Run Tests
       run: |
-        ./mvnw test
+        docker run -v $(pwd)/:/app --workdir /app eclipse-temurin:25-jdk ./mvnw test
+    - name: Upload code coverage results
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-report
+        path: back_end/target/site/jacoco
+        retention-days: 7
