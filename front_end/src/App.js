@@ -8,7 +8,7 @@ import Ratio from './Ratio';
 import Rollout from './Rollout';
 import Speed from './Speed';
 import Map from './Map';
-import Strava from './Strava'
+import StravaRoutes from './Strava/StravaRoutes'
 import BodyBackground from './BodyBackground';
 
 function App() {
@@ -25,7 +25,7 @@ function App() {
             <Route path='/rollout' element={<Rollout/>}/>
             <Route path='/speed' element={<Speed/>}/>
             <Route path='/map' element={<Map/>}/>
-            <Route path='/strava' element={<Strava/>}/>
+            <Route path='/strava/*' element={<StravaRoutes/>}/>
           </Routes>
         </div>
       </BrowserRouter>
