@@ -1,21 +1,23 @@
 import { useEffect, useState } from "react";
-import Strava_Login from './Login';
 import { useNavigate } from 'react-router-dom';
 
 const StravaDashboard = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [athlete, setAthlete] = useState({});
-    const [athleteStats, setAthleteStats] = useState({});
-    const [athleteActivities, setAthleteActivities] = useState({});
+    const [athlete, setAthlete] = useState(() => {
+        const stored = localStorage.getItem("strava_athlete_data");
+        return stored ? JSON.parse(stored) : {};
+    });
+    const [athleteStats, setAthleteStats] = useState(() => {
+        const stored = localStorage.getItem("strava_athlete_stats");
+        return stored ? JSON.parse(stored) : {};
+    });
+    const [athleteActivities, setAthleteActivities] = useState(() => {
+        const stored = localStorage.getItem("strava_athlete_activities");
+        return stored ? JSON.parse(stored) : {};
+    });
     const stravaUrl = 'https://www.strava.com/api/v3';
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const token = localStorage.getItem('strava_access_token');
-        setIsLoggedIn(!!token);
-    }, []);
-
-    const fetchAndSet = (path, setter) => {
+    const fetchAndSet = (path, setter, localStorageKey = null) => {
         const token = localStorage.getItem('strava_access_token');
         fetch(`${stravaUrl}/${path}`, {
                 headers: {
@@ -23,31 +25,32 @@ const StravaDashboard = () => {
                 }
             })
             .then(res => res.json())
-            .then(data => setter(data))
+            .then(data => {
+                setter(data)
+                if (localStorageKey) {
+                    localStorage.setItem(localStorageKey, JSON.stringify(data));
+                }
+            })
             .catch(err => console.error(err));
     };
 
     useEffect(() => {
         const token = localStorage.getItem('strava_access_token');
         if (token) {
-            fetchAndSet("/athlete", setAthlete);
-            fetchAndSet(`/athlete/activities`, setAthleteActivities);
+            fetchAndSet("/athlete", setAthlete, "strava_athlete_data");
+            fetchAndSet(`/athlete/activities`, setAthleteActivities, "strava_athlete_activities");
         }
     }, [stravaUrl]);
 
     useEffect(() => {
-        if (athlete.id) {
-            fetchAndSet(`/athletes/${athlete.id}/stats`, setAthleteStats);
+        if (athlete && athlete.id) {
+            fetchAndSet(`/athletes/${athlete.id}/stats`, setAthleteStats, "strava_athlete_stats");
         }
-    }, [athlete.id, stravaUrl]);
-
-    if (! isLoggedIn) {
-        return <Strava_Login />;
-    }
+    }, [athlete?.id, stravaUrl]);
 
     return (
         <div className="text-center p-[20px] bg-gray-400/80 rounded-xl m-5">
-            <h3 className="flex items-center justify-center gap-4">
+            <h3 className="text-6xl flex items-center justify-center gap-4 pb-4">
                 Welcome {athlete.firstname} {athlete.lastname}
             </h3>
             <h4>Profile Type:
@@ -57,6 +60,8 @@ const StravaDashboard = () => {
                     <span>Free</span>
                 )}
             </h4>
+            Followers: {athlete.follower_count}<br/>
+            Following: {athlete.friend_count}<br/>
             <br/>
             { athleteStats.recent_ride_totals && (
                 <div>
@@ -80,10 +85,9 @@ const StravaDashboard = () => {
                 </div>
             )}
             <br/>
-            Followers: {athlete.follower_count}<br/>
-            Following: {athlete.friend_count}<br/>
             { athlete.bikes && (
                 <div className="bg-[rgba(44,46,58,0.9)] p-2 text-white inline-block whitespace-nowrap rounded-md m-4">
+                    <h3 className="text-3xl pb-2 font-bold">Bikes</h3>
                     {athlete.bikes.map((bike) => (
                         <div key={bike.id} className="flex justify-between items-center py-1">
                             <button className="bg-[#050A44] min-w-[150px] text-white px-5 py-2.5 border-0 cursor-pointer rounded text-base shadow-lg transition-transform duration-100 hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0.5 active:shadow-md w-full" 
@@ -155,7 +159,7 @@ const StravaDashboard = () => {
             )}
 
             <br/><br/><br/>
-            <button onClick={() => { localStorage.removeItem('strava_access_token'); setIsLoggedIn(false); }}>Logout</button>
+            <button onClick={() => { localStorage.removeItem('strava_access_token'); window.location.reload(); }}>Logout</button>
         </div>
     );
 };

@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -86,12 +87,44 @@ public class KeyController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/api/strava-refresh")
+    public ResponseEntity<?> stravaRefresh(@RequestBody StravaRefreshRequest request) throws IOException, InterruptedException {
+        String tokenUri = "https://www.strava.com/oauth/token";
+
+        String bodyData = "client_id=" + URLEncoder.encode(stravaClientId, "UTF-8") +
+                          "&client_secret=" + URLEncoder.encode(stravaClientSecret, "UTF-8") +
+                          "&refresh_token=" + URLEncoder.encode(request.refresh_token, "UTF-8") +
+                          "&grant_type=" + URLEncoder.encode("refresh_token", "UTF-8");
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest httpRequest = HttpRequest.newBuilder()
+                .uri(URI.create(tokenUri))
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .POST(HttpRequest.BodyPublishers.ofString(bodyData))
+                .build();
+
+        HttpResponse<String> httpResponse = client.send(httpRequest, HttpResponse.BodyHandlers.ofString());
+
+        if (httpResponse.statusCode() != 200) {
+            return ResponseEntity.badRequest().body("Strava API error: " + httpResponse.body());
+        }
+
+        ObjectMapper mapper = new ObjectMapper();
+        StravaTokenResponse response = mapper.readValue(httpResponse.body(), StravaTokenResponse.class);
+
+        return ResponseEntity.ok(response);
+    }
+
     public static class StravaTokenResponse {
         public String token_type;
         public long expires_at;
         public int expires_in;
         public String refresh_token;
         public String access_token;
+    }
+
+    public static class StravaRefreshRequest {
+        public String refresh_token;
     }
 }
 

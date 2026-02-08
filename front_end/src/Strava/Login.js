@@ -33,7 +33,38 @@ const Strava_Login = () => {
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
 
-        if (params.get("code") && !hasProcessedCode.current) {
+        const refresh_token = () => {
+            fetch(`${API_BASE_URL}/api/strava-refresh`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    refresh_token: localStorage.getItem('strava_refresh_token')
+                })
+            })
+            .then(res => {
+                if (!res.ok) {
+                    return res.text().then(text => { throw new Error(text); });
+                }
+                return res.json();
+            })
+            .then(data => {
+                localStorage.setItem('strava_access_token', data.access_token);
+                localStorage.setItem('strava_token_expires_at', data.expires_at);
+                localStorage.setItem('strava_refresh_token', data.refresh_token);
+                localStorage.removeItem('strava_state');
+                setStatus("Successfully connected to Strava!");
+                window.location.reload();
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                setStatus("Failed to connect: " + err.message);
+                window.history.replaceState({}, '', '/strava');
+            });
+        }
+
+        const login = () => {
             hasProcessedCode.current = true;
             const storedState = localStorage.getItem('strava_state');
             const returnedState = params.get("state");
@@ -54,15 +85,23 @@ const Strava_Login = () => {
             })
             .then(data => {
                 localStorage.setItem('strava_access_token', data.access_token);
+                localStorage.setItem('strava_token_expires_at', data.expires_at);
+                localStorage.setItem('strava_refresh_token', data.refresh_token);
                 localStorage.removeItem('strava_state');
                 setStatus("Successfully connected to Strava!");
-                window.history.replaceState({}, '', '/strava');
+                window.location.reload(); 
             })
             .catch(err => {
                 console.error("Error:", err);
                 setStatus("Failed to connect: " + err.message);
                 window.history.replaceState({}, '', '/strava');
             });
+        }
+
+        if (localStorage.getItem('strava_access_token') !== null) {
+            refresh_token()
+        } else if (params.get("code") && !hasProcessedCode.current) {
+            login()
         }
     }, [API_BASE_URL]);
 
