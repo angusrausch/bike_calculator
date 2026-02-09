@@ -6,7 +6,7 @@ const Activity = () => {
     return (
         <div>
             Activity PAGE<br/>
-            <button type="button" onClick={() => navigate(`/strava`)}>Back</button>
+            <button type="button" onClick={() => navigate(-1)}>Back</button>
         </div>
     );
 };
