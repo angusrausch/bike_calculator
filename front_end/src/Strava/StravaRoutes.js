@@ -6,22 +6,49 @@ import Activity from "./Activity";
 import Strava_Login from './Login';
 
 const StravaRoutes = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('strava_access_token'));
     const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
-    const [status, setStatus] = useState("");
+    
+    const [status, setStatus] = useState("loading"); 
+    const [accessToken, setAccessToken] = useState(null);
 
-    if (!isLoggedIn || localStorage.getItem("strava_token_expires_at") * 1000 < Date.now()) {
-        return <Strava_Login />;
+    useEffect(() => {
+        fetch(`${API_BASE_URL}/api/strava-refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("No valid session");
+            return res.json();
+        })
+        .then(data => {
+            setAccessToken(data.access_token);
+            setStatus("authenticated");
+        })
+        .catch(() => {
+            setStatus("unauthenticated");
+        });
+    }, [API_BASE_URL]);
 
-    } else {
+    if (status === "loading") {
         return (
-            <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="bike/:id" element={<Bike />} />
-                <Route path="activity/:id" element={<Activity />} />
-            </Routes>
+            <div className="flex items-center justify-center h-screen bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600"></div>
+            </div>
         );
     }
+
+    if (status === "unauthenticated") {
+        return <Strava_Login />;
+    }
+
+    return (
+        <Routes>
+            <Route path="/" element={<Dashboard token={accessToken} />} />
+            <Route path="bike/:id" element={<Bike token={accessToken} />} />
+            <Route path="activity/:id" element={<Activity token={accessToken} />} />
+        </Routes>
+    );
 };
 
 export default StravaRoutes;

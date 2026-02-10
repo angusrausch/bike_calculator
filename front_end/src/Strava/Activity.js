@@ -1,18 +1,16 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-const Activity = () => {
+const Activity = ({ token }) => {
     const navigate = useNavigate();
     const [activity, setActivity] = useState({});
     const { id } = useParams();
     const [isLoading, setIsLoading] = useState(true);
     const stravaUrl = 'https://www.strava.com/api/v3';
     const mapRef = useRef(null);
-    const googleMapInstance = useRef(null);
     const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
     const fetcher = (path) => {
-        const token = localStorage.getItem('strava_access_token');
         return fetch(`${stravaUrl}/${path}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -23,7 +21,6 @@ const Activity = () => {
 
     useEffect(() => {
         async function fetchActivityData() {
-            const token = localStorage.getItem('strava_access_token');
             setIsLoading(true);
             try {
                 const activityData = await fetcher(`/activities/${id}`);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 
-const StravaDashboard = () => {
+const StravaDashboard = ({ token }) => {
     const [athlete, setAthlete] = useState(() => {
         const stored = localStorage.getItem("strava_athlete_data");
         return stored ? JSON.parse(stored) : {};
@@ -16,9 +16,9 @@ const StravaDashboard = () => {
     });
     const stravaUrl = 'https://www.strava.com/api/v3';
     const navigate = useNavigate();
+    const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
     const fetchAndSet = (path, setter, localStorageKey = null) => {
-        const token = localStorage.getItem('strava_access_token');
         fetch(`${stravaUrl}/${path}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -35,18 +35,31 @@ const StravaDashboard = () => {
     };
 
     useEffect(() => {
-        const token = localStorage.getItem('strava_access_token');
         if (token) {
             fetchAndSet("/athlete", setAthlete, "strava_athlete_data");
             fetchAndSet(`/athlete/activities`, setAthleteActivities, "strava_athlete_activities");
         }
-    }, [stravaUrl]);
+    }, [stravaUrl, token]);
 
     useEffect(() => {
-        if (athlete && athlete.id) {
+        if (token && athlete && athlete.id) {
             fetchAndSet(`/athletes/${athlete.id}/stats`, setAthleteStats, "strava_athlete_stats");
         }
-    }, [athlete?.id, stravaUrl]);
+    }, [athlete?.id, stravaUrl, token]);
+
+    const handleLogout = () => {
+        fetch(`${API_BASE_URL}/api/strava-logout`, { 
+            method: 'POST',
+            credentials: 'include' 
+        })
+        .finally(() => {
+            localStorage.removeItem("strava_athlete_data");
+            localStorage.removeItem("strava_athlete_stats");
+            localStorage.removeItem("strava_athlete_activities");
+            
+            window.location.href = '/strava'; 
+        });
+    };
 
     return (
         <div className="text-center p-[20px] bg-gray-400/80 rounded-xl m-5">
@@ -159,7 +172,7 @@ const StravaDashboard = () => {
             )}
 
             <br/><br/><br/>
-            <button onClick={() => { localStorage.removeItem('strava_access_token'); window.location.reload(); }}>Logout</button>
+            <button onClick={handleLogout}>Logout</button>
         </div>
     );
 };

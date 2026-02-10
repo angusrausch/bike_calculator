@@ -3,7 +3,8 @@ import { useEffect, useState, useRef } from "react";
 const Strava_Login = () => {
     const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
     const [clientId, setClientId] = useState("");
-    const [status, setStatus] = useState("");
+    const [status, setStatus] = useState("Not connected");
+    const [accessToken, setAccessToken] = useState(null); 
     const hasProcessedCode = useRef(false); 
 
     const authorizeWithStrava = () => {
@@ -32,76 +33,72 @@ const Strava_Login = () => {
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
+        if (!params.get("code") && !accessToken) {
+            checkSession();
+        }
+    }, [accessToken]);
 
-        const refresh_token = () => {
-            fetch(`${API_BASE_URL}/api/strava-refresh`, {
+    const checkSession = () => {
+        fetch(`${API_BASE_URL}/api/strava-refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include' 
+        })
+        .then(res => {
+            if (!res.ok) throw new Error("Session expired or invalid");
+            return res.json();
+        })
+        .then(data => {
+            setAccessToken(data.access_token);
+            setStatus("Connected (Session Restored)");
+        })
+        .catch(() => {
+            setStatus("Please connect to Strava");
+        });
+    }
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get("code");
+        const returnedState = params.get("state");
+
+        const login = () => {
+            hasProcessedCode.current = true;
+            const storedState = localStorage.getItem('strava_state');
+            
+            if (storedState !== returnedState) {
+                setStatus("State mismatch, possible security issue");
+                window.history.replaceState({}, '', window.location.pathname);
+                return;
+            }
+
+            setStatus("Exchanging code for token...");
+
+            fetch(`${API_BASE_URL}/api/strava-login?code=${encodeURIComponent(code)}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    refresh_token: localStorage.getItem('strava_refresh_token')
-                })
+                credentials: 'include'
             })
             .then(res => {
-                if (!res.ok) {
-                    return res.text().then(text => { throw new Error(text); });
-                }
+                if (!res.ok) return res.text().then(text => { throw new Error(text); });
                 return res.json();
             })
             .then(data => {
-                localStorage.setItem('strava_access_token', data.access_token);
-                localStorage.setItem('strava_token_expires_at', data.expires_at);
-                localStorage.setItem('strava_refresh_token', data.refresh_token);
+                setAccessToken(data.access_token);
                 localStorage.removeItem('strava_state');
                 setStatus("Successfully connected to Strava!");
+
+                window.history.replaceState({}, '', window.location.pathname);
                 window.location.reload();
             })
             .catch(err => {
                 console.error("Error:", err);
                 setStatus("Failed to connect: " + err.message);
-                window.history.replaceState({}, '', '/strava');
+                window.history.replaceState({}, '', window.location.pathname);
             });
         }
 
-        const login = () => {
-            hasProcessedCode.current = true;
-            const storedState = localStorage.getItem('strava_state');
-            const returnedState = params.get("state");
-            if (storedState !== returnedState) {
-                setStatus("State mismatch, possible security issue");
-                window.history.replaceState({}, '', '/strava');
-                return;
-            }
-            setStatus("Exchanging code for token...");
-            fetch(`${API_BASE_URL}/api/strava-login?code=${encodeURIComponent(params.get("code"))}&state=${encodeURIComponent(params.get("state"))}`, {
-                method: 'POST'
-            })
-            .then(res => {
-                if (!res.ok) {
-                    return res.text().then(text => { throw new Error(text); });
-                }
-                return res.json();
-            })
-            .then(data => {
-                localStorage.setItem('strava_access_token', data.access_token);
-                localStorage.setItem('strava_token_expires_at', data.expires_at);
-                localStorage.setItem('strava_refresh_token', data.refresh_token);
-                localStorage.removeItem('strava_state');
-                setStatus("Successfully connected to Strava!");
-                window.location.reload(); 
-            })
-            .catch(err => {
-                console.error("Error:", err);
-                setStatus("Failed to connect: " + err.message);
-                window.history.replaceState({}, '', '/strava');
-            });
-        }
-
-        if (localStorage.getItem('strava_access_token') !== null) {
-            refresh_token()
-        } else if (params.get("code") && !hasProcessedCode.current) {
-            login()
+        if (code && !hasProcessedCode.current) {
+            login();
         }
     }, [API_BASE_URL]);
 
@@ -117,21 +114,31 @@ const Strava_Login = () => {
                 </div>
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Connect to Strava</h1>
                 <p className="text-gray-600">Access your cycling data and performance metrics</p>
-                {status && <p className="mt-4 text-sm text-blue-600">{status}</p>}
+                
+                {/* Visual Status Indicator */}
+                <div className={`mt-4 text-sm font-semibold ${accessToken ? 'text-green-600' : 'text-blue-600'}`}>
+                    {status}
+                </div>
             </div>
 
-            <button 
-                    className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 
-                        text-white px-8 py-4 rounded-xl transition-all duration-300 font-bold text-lg shadow-lg 
-                        hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center space-x-3"
-                    onClick={authorizeWithStrava}>
-                <i className="fa-brands fa-strava text-xl"></i>
-                <span>Connect with Strava</span>
-            </button>
+            {!accessToken ? (
+                <button 
+                        className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 
+                            text-white px-8 py-4 rounded-xl transition-all duration-300 font-bold text-lg shadow-lg 
+                            hover:shadow-xl transform hover:-translate-y-1 flex items-center justify-center space-x-3"
+                        onClick={authorizeWithStrava}>
+                    <i className="fa-brands fa-strava text-xl"></i>
+                    <span>Connect with Strava</span>
+                </button>
+            ) : (
+                <div className="w-full bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded relative" role="alert">
+                    <strong className="font-bold">Logged In! </strong>
+                    <span className="block sm:inline">You can now access your data.</span>
+                </div>
+            )}
 
             <div className="mt-8 space-y-3">
                 <div className="text-sm text-gray-600 text-center mb-4 font-medium">What you'll get access to:</div>
-                
                 <div className="flex items-center text-sm text-gray-700">
                     <div className="bg-green-100 p-1 rounded-full mr-3">
                         <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
@@ -140,27 +147,8 @@ const Strava_Login = () => {
                     </div>
                     <span>View your cycling activities and performance data</span>
                 </div>
-                
-                <div className="flex items-center text-sm text-gray-700">
-                    <div className="bg-green-100 p-1 rounded-full mr-3">
-                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <span>Analyze power data, segments, and gear information</span>
-                </div>
-                
-                <div className="flex items-center text-sm text-gray-700">
-                    <div className="bg-green-100 p-1 rounded-full mr-3">
-                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                    </div>
-                    <span>Track your bikes and equipment statistics</span>
-                </div>
             </div>
         </div>
-
     );
 };
 

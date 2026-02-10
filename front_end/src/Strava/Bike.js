@@ -1,7 +1,7 @@
 import { useState, useEffect, act } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-const Bike = () => {
+const Bike = ({ token }) => {
     const navigate = useNavigate();
     const { id } = useParams();
     const [bike, setBike] = useState({});
@@ -10,7 +10,6 @@ const Bike = () => {
     const stravaUrl = 'https://www.strava.com/api/v3';
 
     const fetcher = (path) => {
-        const token = localStorage.getItem('strava_access_token');
         return fetch(`${stravaUrl}/${path}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -21,7 +20,6 @@ const Bike = () => {
 
     useEffect(() => {
         async function fetchBikeData() {
-            const token = localStorage.getItem('strava_access_token');
             setIsLoading(true);
             try {
                 const bikeData = await fetcher(`/gear/${id}`);
@@ -34,7 +32,6 @@ const Bike = () => {
         }
 
         async function fetchBikeActivities() {
-            const token = localStorage.getItem('strava_access_token');
             try {
                 const allActivities = await fetcher(`/athlete/activities?per_page=100`);
                 const filteredActivities = allActivities.filter(activity => activity.gear_id == id);
