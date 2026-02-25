@@ -18,6 +18,8 @@ NETWORK=""
 BACKEND=false
 FRONTEND=false
 
+DIR="$(dirname "$(realpath "$0")")"
+
 show_usage() {
   echo "Usage: $0 [OPTIONS]"
   echo ""
@@ -101,7 +103,7 @@ if $BUILD; then
   echo -e "\n${GREEN}Building Images${NC}\n"
   if $BACKEND; then
     echo -e "\n${YELLOW}Building Backend Image...${NC}"
-    docker build -t bike_calculator_backend ./back_end/
+    docker build -t bike_calculator_backend $DIR/back_end/
     if [[ $? -ne 0 ]]; then
       echo "${RED}Building backend docker image failed $STATUS${NC}"
       exit 1
@@ -110,7 +112,7 @@ if $BUILD; then
 
   if $FRONTEND; then
     echo -e "\n${YELLOW}Building Frontend Image...${NC}"
-    docker build -t bike_calculator_frontend ./front_end/
+    docker build -t bike_calculator_frontend $DIR/front_end/
     if [[ $? -ne 0 ]]; then
       echo "${RED}Building frontend docker image failed $STATUS${NC}"
       exit 1
@@ -119,6 +121,12 @@ if $BUILD; then
 fi
 
 if $START; then
+  # Check for .env file for backend
+  VOL_MOUNT=""
+  if [ -f "$DIR/back_end/.env" ]; then
+    VOL_MOUNT="-v $DIR/back_end/.env:/app/.env"
+  fi
+
   if $BACKEND; then
     echo -e "\n${YELLOW}Starting Backend Container...${CYAN}"
 
@@ -132,7 +140,7 @@ if $START; then
       echo -e "${GREEN}Backend docker container shut down.${NC}"
     fi
 
-    docker run ${NETWORK} --name bike_calculator_backend \
+    docker run ${NETWORK} ${VOL_MOUNT} --name bike_calculator_backend \
           -p 8080:8080 \
           --restart unless-stopped \
           -d bike_calculator_backend

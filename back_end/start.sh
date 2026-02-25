@@ -4,7 +4,9 @@ set -a
 
 DIR="$(dirname "$(realpath "$0")")"
 
-. "$DIR/.env"
+if [ -f "$DIR/.env" ]; then
+  . "$DIR/.env"
+fi
 
 set +a
 
