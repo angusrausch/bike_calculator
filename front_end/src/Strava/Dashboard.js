@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 
-const StravaDashboard = ({ token }) => {
+const StravaDashboard = ({ token, onLogout }) => {
     const [athlete, setAthlete] = useState(() => {
         const stored = localStorage.getItem("strava_athlete_data");
         return stored ? JSON.parse(stored) : {};
@@ -18,7 +18,7 @@ const StravaDashboard = ({ token }) => {
     const navigate = useNavigate();
     const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
-    const fetchAndSet = (path, setter, localStorageKey = null) => {
+    const fetchAndSet = useCallback((path, setter, localStorageKey = null) => {
         fetch(`${stravaUrl}/${path}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -32,25 +32,26 @@ const StravaDashboard = ({ token }) => {
                 }
             })
             .catch(err => console.error(err));
-    };
+    }, [stravaUrl, token]);
 
     useEffect(() => {
         if (token) {
             fetchAndSet("/athlete", setAthlete, "strava_athlete_data");
             fetchAndSet(`/athlete/activities`, setAthleteActivities, "strava_athlete_activities");
         }
-    }, [stravaUrl, token]);
+    }, [fetchAndSet, token]);
 
     useEffect(() => {
         if (token && athlete && athlete.id) {
             fetchAndSet(`/athletes/${athlete.id}/stats`, setAthleteStats, "strava_athlete_stats");
         }
-    }, [athlete?.id, stravaUrl, token]);
+    }, [athlete, fetchAndSet, token]);
 
     const handleLogout = () => {
         fetch(`${API_BASE_URL}/api/strava-logout`, { 
             method: 'POST',
-            credentials: 'include' 
+            credentials: 'include',
+            body: new URLSearchParams({ accessToken: token })
         })
         .finally(() => {
             localStorage.removeItem("strava_athlete_data");

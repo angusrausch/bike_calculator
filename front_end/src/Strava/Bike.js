@@ -1,4 +1,4 @@
-import { useState, useEffect, act } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const Bike = ({ token }) => {
@@ -9,14 +9,14 @@ const Bike = ({ token }) => {
     const [bikeActivities, setBikeActivities] = useState([]);
     const stravaUrl = 'https://www.strava.com/api/v3';
 
-    const fetcher = (path) => {
+    const fetcher = useCallback((path) => {
         return fetch(`${stravaUrl}/${path}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             })
             .then(res => res.json());
-    };
+    }, [stravaUrl, token]);
 
     useEffect(() => {
         async function fetchBikeData() {
@@ -34,7 +34,7 @@ const Bike = ({ token }) => {
         async function fetchBikeActivities() {
             try {
                 const allActivities = await fetcher(`/athlete/activities?per_page=100`);
-                const filteredActivities = allActivities.filter(activity => activity.gear_id == id);
+                const filteredActivities = allActivities.filter(activity => activity.gear_id === id);
                 setBikeActivities(filteredActivities);
             } catch (error) {
                 console.error('Error fetching bike data activities:', error);
@@ -43,7 +43,7 @@ const Bike = ({ token }) => {
 
         fetchBikeData();
         fetchBikeActivities();
-    }, [stravaUrl, id]);
+    }, [fetcher, id]);
 
     if (isLoading) {
         return (

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 const Activity = ({ token }) => {
@@ -10,14 +10,14 @@ const Activity = ({ token }) => {
     const mapRef = useRef(null);
     const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
-    const fetcher = (path) => {
+    const fetcher = useCallback((path) => {
         return fetch(`${stravaUrl}/${path}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             })
             .then(res => res.json());
-    };
+    }, [stravaUrl, token]);
 
     useEffect(() => {
         async function fetchActivityData() {
@@ -33,7 +33,7 @@ const Activity = ({ token }) => {
         }
 
         fetchActivityData();
-    }, [stravaUrl, id]);
+    }, [fetcher, id]);
 
     useEffect(() => {
         if (activity.id) {

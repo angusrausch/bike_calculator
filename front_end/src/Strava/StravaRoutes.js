@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Dashboard from './Dashboard';
 import Bike from './Bike';
 import Activity from "./Activity";
-import Strava_Login from './Login';
+import StravaLogin from './Login';
 
 const StravaRoutes = () => {
     const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
@@ -39,7 +39,7 @@ const StravaRoutes = () => {
     }
 
     if (status === "unauthenticated") {
-        return <Strava_Login />;
+        return <StravaLogin />;
     }
 
     return (

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 
-const Strava_Login = () => {
+const StravaLogin = () => {
     const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
     const [clientId, setClientId] = useState("");
     const [status, setStatus] = useState("Not connected");
@@ -32,30 +32,31 @@ const Strava_Login = () => {
     }, [API_BASE_URL]);
 
     useEffect(() => {
+        const checkSession = () => {
+            fetch(`${API_BASE_URL}/api/strava-refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include' 
+            })
+            .then(res => {
+                if (!res.ok) throw new Error("Session expired or invalid");
+                return res.json();
+            })
+            .then(data => {
+                setAccessToken(data.access_token);
+                setStatus("Connected (Session Restored)");
+            })
+            .catch(() => {
+                setStatus("Please connect to Strava");
+            });
+        }
+
         const params = new URLSearchParams(window.location.search);
         if (!params.get("code") && !accessToken) {
             checkSession();
         }
-    }, [accessToken]);
+    }, [accessToken, API_BASE_URL]);
 
-    const checkSession = () => {
-        fetch(`${API_BASE_URL}/api/strava-refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include' 
-        })
-        .then(res => {
-            if (!res.ok) throw new Error("Session expired or invalid");
-            return res.json();
-        })
-        .then(data => {
-            setAccessToken(data.access_token);
-            setStatus("Connected (Session Restored)");
-        })
-        .catch(() => {
-            setStatus("Please connect to Strava");
-        });
-    }
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -152,4 +153,4 @@ const Strava_Login = () => {
     );
 };
 
-export default Strava_Login;
+export default StravaLogin;
