@@ -129,10 +129,25 @@ public class KeyController {
     }
 
     @PostMapping("/api/strava-logout")
-    public ResponseEntity<?> logout(HttpServletResponse response) {
+    public ResponseEntity<?> logout(@RequestParam String accessToken, HttpServletResponse response) throws IOException, InterruptedException {
+
+        String deauthorizeUri = "https://www.strava.com/oauth/deauthorize";
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(deauthorizeUri))
+                .header("Authorization", "Bearer " + accessToken)
+                .POST(HttpRequest.BodyPublishers.noBody())
+                .build();
+
+        HttpResponse<String> httpResponse = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (httpResponse.statusCode() != 200) {
+            System.err.println("Failed to revoke token: " + httpResponse.body());
+        }
+
         ResponseCookie cookie = ResponseCookie.from("strava_refresh_token", "")
                 .httpOnly(true)
-                .secure(true)
+                .secure(Boolean.parseBoolean(secure))
                 .path("/")
                 .maxAge(0)
                 .sameSite("Strict")
