@@ -27,6 +27,8 @@ Other inovations have occured as well. Need to find your closest tap to refill y
 - Node V22
 - Java (OpenJDK) 25
 - PostgreSQL
+OR
+- Docker
 
 **For Production:**
 - Docker

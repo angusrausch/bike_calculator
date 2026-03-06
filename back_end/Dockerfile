@@ -8,8 +8,6 @@ RUN ./mvnw dependency:go-offline
  
 COPY src ./src
 
-COPY .env /app/
-
 COPY start.sh /app/
 RUN chmod +x start.sh
 
