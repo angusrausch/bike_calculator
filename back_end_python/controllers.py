@@ -1,8 +1,9 @@
 from flask import Blueprint, request, jsonify
+import json
 from database import db
 from models import Cassette, Crankset, Tyre
 from calculator import calculate_ratios, calculate_rollouts, calculate_speeds
-import json
+from environment import GOOGLE_MAPS_KEY, STRAVA_CLIENT_ID, STRAVA_SECRET, FRONTEND_URL
 
 bp = Blueprint('api', __name__)
 
@@ -26,13 +27,6 @@ def get_cranksets():
 def get_tyres():
     results = db.session.query(Tyre).all()
     return jsonify_db(results)
-
-@bp.route("/api/cassettes/<int:cassette_id>")
-def get_cassette(cassette_id):
-    cassette = db.session.query(Cassette).get(cassette_id)
-    if cassette:
-        return jsonify({"id": cassette.id, "name": cassette.name, "sprockets": cassette.sprockets, "speed": cassette.speed})
-    return jsonify({"error": "Not found"}), 404
 
 @bp.route("/api/calculate/ratio")
 def get_ratios():
@@ -159,3 +153,17 @@ def get_speed():
         "results": ratios,
         "cadences": cadence_list
     })
+
+@bp.route("/api/get-google-maps-key")
+def get_google_maps_key():
+    return jsonify({"google_maps_key": GOOGLE_MAPS_KEY})
+
+@bp.route("/api/get-strava-client-id")
+def get_strava_client_id():
+    return jsonify({"strava_client_id": STRAVA_CLIENT_ID})
+
+@bp.route("/api/strava-login")
+def post_strava_login():
+    code = request.args.get('code')
+    
+    return 404
