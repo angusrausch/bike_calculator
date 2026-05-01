@@ -1,9 +1,9 @@
 from flask import Flask
 from flask_cors import CORS
 
-from database import db
-from controllers import bp
-from environment import FRONTEND_URL, SQL_DB_URI
+from .database import db
+from .controllers import bp
+from .environment import FRONTEND_URL, SQL_DB_URI
 
 # Load app
 app = Flask(__name__)

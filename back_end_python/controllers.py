@@ -1,9 +1,9 @@
 from flask import Blueprint, request, jsonify
 import json
-from database import db
-from models import Cassette, Crankset, Tyre
-from calculator import calculate_ratios, calculate_rollouts, calculate_speeds
-from environment import GOOGLE_MAPS_KEY, STRAVA_CLIENT_ID, STRAVA_SECRET, FRONTEND_URL
+from .database import db
+from .models import Cassette, Crankset, Tyre
+from .calculator import calculate_ratios, calculate_rollouts, calculate_speeds
+from .environment import GOOGLE_MAPS_KEY, STRAVA_CLIENT_ID, STRAVA_SECRET, FRONTEND_URL
 
 bp = Blueprint('api', __name__)
 

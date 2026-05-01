@@ -1,7 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
 
-from database import db
+from .database import db
 
 class Cassette(db.Model):
     __tablename__ = 'cassettes'

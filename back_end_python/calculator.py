@@ -2,6 +2,8 @@ from pprint import pprint
 
 def calculate_ratios(crankset, cassette):
     gear_ratios = []
+    cassette.sort(reverse=True)
+    crankset.sort()
     for chainring in crankset:
         temp_ratios = []
         for sprocket in cassette:
@@ -45,7 +47,3 @@ crankset = [52,36]
 cassette = [11,12,13,14,15,16,17,19,21,24,27,30]
 tyre = 2198
 cadences = [60,70,80,90,100]
-
-# pprint(calculate_ratios(crankset, cassette))
-# pprint(calculate_rollouts(crankset, cassette, tyre))
-# pprint(calculate_speeds(crankset, cassette, tyre, cadences))
