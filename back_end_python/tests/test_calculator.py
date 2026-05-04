@@ -1,6 +1,6 @@
 import pytest
 
-from calculator import calculate_ratios, calculate_rollouts, calculate_speeds
+from bikecalc.calculator import calculate_ratios, calculate_rollouts, calculate_speeds
 
 chainring_size = [52,36]
 cassette_size = [11,12,13,14,15,16,17,19,21,24,27,30]

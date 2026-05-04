@@ -17,7 +17,12 @@ class Cassette(db.Model):
 
     @property
     def sprockets(self):
-        return [int(sprocket) for sprocket in self._sprockets.split(',')]
+        if isinstance(self._sprockets, str):
+            return [int(sprocket) for sprocket in self._sprockets.split(',')]
+        elif isinstance(self._sprockets, list):
+            return [int(sprocket) for sprocket in self._sprockets]
+        else:
+            return []
 
     @sprockets.setter
     def sprockets(self, value):
@@ -49,7 +54,12 @@ class Crankset(db.Model):
 
     @property
     def rings(self):
-        return [int(ring) for ring in self._rings.split(',')]
+        if isinstance(self._rings, str):
+            return [int(ring) for ring in self._rings.split(',')]
+        elif isinstance(self._rings, list):
+            return [int(ring) for ring in self._rings]
+        else:
+            return []
 
     @rings.setter
     def rings(self, value):
