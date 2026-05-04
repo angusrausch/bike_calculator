@@ -54,6 +54,8 @@ def test_get_calculate_ratios(client, fake_bike_data, app):
     with app.app_context():
         crankset = db.session.get(Crankset, 1)
         cassette = db.session.get(Cassette, 1)
+        assert crankset is not None, "Crankset with id=1 not found. Check test data seeding."
+        assert cassette is not None, "Cassette with id=1 not found. Check test data seeding."
         expected_chainrings = crankset.rings
         expected_sprockets = cassette.sprockets
     response = client.get(full_path)
@@ -73,6 +75,9 @@ def test_get_calculate_rollout(client, fake_bike_data, app):
         crankset = db.session.get(Crankset, 1)
         cassette = db.session.get(Cassette, 1)
         tyre = db.session.get(Tyre, 1)
+        assert crankset is not None, "Crankset with id=1 not found. Check test data seeding."
+        assert cassette is not None, "Cassette with id=1 not found. Check test data seeding."
+        assert tyre is not None, "Tyre with id=1 not found. Check test data seeding."
         expected_chainrings = crankset.rings
         expected_sprockets = cassette.sprockets
         expected_circumference = tyre.circumference
@@ -93,6 +98,9 @@ def test_get_calculate_speed(client, fake_bike_data, app):
         crankset = db.session.get(Crankset, 1)
         cassette = db.session.get(Cassette, 1)
         tyre = db.session.get(Tyre, 1)
+        assert crankset is not None, "Crankset with id=1 not found. Check test data seeding."
+        assert cassette is not None, "Cassette with id=1 not found. Check test data seeding."
+        assert tyre is not None, "Tyre with id=1 not found. Check test data seeding."
         expected_chainrings = crankset.rings
         expected_sprockets = cassette.sprockets
         expected_circumference = tyre.circumference
@@ -137,6 +145,7 @@ def test_get_calculate_rollout_manual_input(client, fake_bike_data, app):
     full_path = base_path + "?" + params
     with app.app_context():
         tyre = db.session.get(Tyre, 1)
+        assert tyre is not None, "Tyre with id=1 not found. Check test data seeding."
         expected_circumference = tyre.circumference
     expected_chainrings = [int(chainring) for chainring in manual_chainrings.split(',')]
     expected_sprockets = [int(sprocket) for sprocket in manual_cassette_sprockets.split(',')]
@@ -160,6 +169,7 @@ def test_get_calculate_speed_manual_input(client, fake_bike_data, app):
     full_path = base_path + "?" + params
     with app.app_context():
         tyre = db.session.get(Tyre, 1)
+        assert tyre is not None, "Tyre with id=1 not found. Check test data seeding."
         expected_circumference = tyre.circumference
     cadence_list = [cadence for cadence in range(50, 100 + 1, 10)]
     expected_chainrings = [int(chainring) for chainring in manual_chainrings.split(',')]
