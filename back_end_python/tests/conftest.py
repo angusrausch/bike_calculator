@@ -1,5 +1,3 @@
-
-
 import pytest
 from bikecalc import create_app
 
