@@ -39,7 +39,7 @@ def create_calculator_blueprint():
             try:
                 cassette_sprockets = [int(sprocket) for sprocket in manual_cassette.split(',')]
             except ValueError:
-                return jsonify({"error": "Invalid Manual Cassette"})
+                return jsonify({"error": "Invalid Manual Cassette"}), 400
         else:
             cassette = db.session.get(Cassette, cassette_id)
             if not cassette:
@@ -50,7 +50,7 @@ def create_calculator_blueprint():
             try:
                 chainrings = [int(ring) for ring in manual_chainring.split(',')]
             except ValueError:
-                return jsonify({"error": "Invalid Manual Cassette"})
+                return jsonify({"error": "Invalid Manual Crankset"}), 400
         else:
             crankset = db.session.get(Crankset, crankset_id)
             if not crankset:
@@ -76,7 +76,7 @@ def create_calculator_blueprint():
             try:
                 cassette_sprockets = [int(sprocket) for sprocket in manual_cassette.split(',')]
             except ValueError:
-                return jsonify({"error": "Invalid Manual Cassette"})
+                return jsonify({"error": "Invalid Manual Cassette"}), 400
         else:
             cassette = db.session.get(Cassette, cassette_id)
             if not cassette:
@@ -87,7 +87,7 @@ def create_calculator_blueprint():
             try:
                 chainrings = [int(ring) for ring in manual_chainring.split(',')]
             except ValueError:
-                return jsonify({"error": "Invalid Manual Cassette"})
+                return jsonify({"error": "Invalid Manual Crankset"}), 400
         else:
             crankset = db.session.get(Crankset, crankset_id)
             if not crankset:
@@ -121,7 +121,7 @@ def create_calculator_blueprint():
             try:
                 cassette_sprockets = [int(sprocket) for sprocket in manual_cassette.split(',')]
             except ValueError:
-                return jsonify({"error": "Invalid Manual Cassette"})
+                return jsonify({"error": "Invalid Manual Cassette"}), 400
         else:
             cassette = db.session.get(Cassette, cassette_id)
             if not cassette:
@@ -132,7 +132,7 @@ def create_calculator_blueprint():
             try:
                 chainrings = [int(ring) for ring in manual_chainring.split(',')]
             except ValueError:
-                return jsonify({"error": "Invalid Manual Cassette"})
+                return jsonify({"error": "Invalid Manual Crankset"}), 400
         else:
             crankset = db.session.get(Crankset, crankset_id)
             if not crankset:
