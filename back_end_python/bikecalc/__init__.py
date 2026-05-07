@@ -8,7 +8,7 @@ from .environment import FRONTEND_URL, SQL_DB_URI
 
 def create_app(test_config=None):
 	app = Flask(__name__)
-	CORS(app, origins=[FRONTEND_URL])
+	CORS(app, origins=[FRONTEND_URL], supports_credentials=True)
 
 	app.config['SQLALCHEMY_DATABASE_URI'] = SQL_DB_URI
 	app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

@@ -7,6 +7,7 @@ load_dotenv()
 # Configuration
 FRONTEND_URL = os.getenv("FRONTEND_URL")
 SQL_DB_URI = os.getenv("DATABASE_CONNECTION_STRING")
+SECURE_FRONTEND = os.getenv("FRONTEND_SECURE").lower() == "true"
 
 # Keys (fetch dynamically for testability)
 def get_google_maps_key():
