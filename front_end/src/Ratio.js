@@ -65,6 +65,11 @@ const Ratio = () => {
             window.history.replaceState({}, '', newUrl);
 
             const calculations = await response.json();
+            
+            if (calculations.error) {
+                setError(calculations.error);
+                return
+            }
 
             if (calculations && calculations.results && calculations.results.length > 0) {
                 setSprockets(calculations.sprockets);
