@@ -1,0 +1,25 @@
+name: Backend_Tests_Rust
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test_rust:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./back_end_rust
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run Tests
+      run: |
+        docker run -v $(pwd)/:/app --workdir /app rust:trixie cargo install tarpaulin; cargo tarpaulin --out Html
+    - name: Upload code coverage results
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage-report-rust
+        path: back_end_rust/tarpaulin-report.html
+        retention-days: 7
