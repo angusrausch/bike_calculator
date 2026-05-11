@@ -7,6 +7,7 @@ use http::{HeaderValue, Method};
 
 use crate::entities::{cranksets, cassettes, tyres};
 use crate::controllers::{get_cassettes, get_cranksets, get_tyres};
+use back_end_rust::app_state::AppState;
 
 mod calculator;
 mod entities;
@@ -49,7 +50,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[derive(Clone)]
-pub struct AppState {
-    pub db: Arc<DatabaseConnection>,
-}
