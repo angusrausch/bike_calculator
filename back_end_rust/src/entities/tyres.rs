@@ -20,7 +20,7 @@ impl ActiveModelBehavior for ActiveModel {}
 
 
 impl Entity {
-    pub async fn get_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<Model>, DbErr> {
+    pub async fn get_by_id(db: &DatabaseConnection, id: u16) -> Result<Option<Model>, DbErr> {
         Self::find().filter(Column::Id.eq(id)).one(db).await
     }
 

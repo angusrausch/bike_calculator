@@ -2,7 +2,7 @@ use axum::{Router, routing::get};
 use tower_http::cors::{Any, CorsLayer};
 use http::{HeaderValue, Method};
 use std::sync::Arc;
-use crate::controllers::{get_cranksets, get_cassettes, get_tyres};
+use crate::controllers::{*};
 use crate::AppState;
 
 pub fn build_app(state: AppState, cors: Option<CorsLayer>) -> Router {
@@ -10,6 +10,7 @@ pub fn build_app(state: AppState, cors: Option<CorsLayer>) -> Router {
         .route("/api/cassettes", get(get_cassettes))
         .route("/api/cranksets", get(get_cranksets))
         .route("/api/tyres", get(get_tyres))
+        .route("/api/calculate/ratio", get(get_calculate_ratio))
         .with_state(state);
     if let Some(cors_layer) = cors {
         app = app.layer(cors_layer);

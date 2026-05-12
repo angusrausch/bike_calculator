@@ -20,12 +20,29 @@ impl ActiveModelBehavior for ActiveModel {}
 
 
 impl Entity {
-    pub async fn get_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<Model>, DbErr> {
+    pub async fn get_by_id(db: &DatabaseConnection, id: u16) -> Result<Option<Model>, DbErr> {
         Self::find().filter(Column::Id.eq(id)).one(db).await
     }
 
     pub async fn get_all(db: &DatabaseConnection) -> Result<Vec<Model>, DbErr> {
         Self::find().all(db).await
+    }
+}
+
+impl Model {
+    pub fn rings_vec(&self) -> Result<Vec<u16>, String> {
+        let s = self.rings.as_ref().ok_or_else(|| "missing rings".to_string())?;
+        let mut out = Vec::new();
+        for part in s.split(',') {
+            let trimmed = part.trim();
+            if trimmed.is_empty() { continue; }
+            match trimmed.parse::<u16>() {
+                Ok(n) => out.push(n),
+                Err(_) => return Err(format!("invalid ring number: {}", trimmed)),
+            }
+        }
+        if out.is_empty() { return Err("no rings found".to_string()); }
+        Ok(out)
     }
 }
 

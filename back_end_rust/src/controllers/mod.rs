@@ -4,6 +4,6 @@ pub mod calculator_controllers;
 // pub mod bike_controllers;
 
 // Re-export all controller functions you want available in main.rs
-pub use calculator_controllers::{get_cranksets, get_cassettes, get_tyres};
+pub use calculator_controllers::{get_cranksets, get_cassettes, get_tyres, get_calculate_ratio};
 // pub use user_controllers::*;
 // pub use bike_controllers::*;
