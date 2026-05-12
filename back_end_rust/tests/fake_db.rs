@@ -26,7 +26,7 @@ pub async fn setup_cranksets_table(db: &DatabaseConnection) {
     .expect("Failed to create cranksets table");
     db.execute(Statement::from_string(
         db.get_database_backend(),
-        "INSERT INTO cranksets (id, name, rings) VALUES (1, 'TestCrank', '50/34'), (2, 'AnotherCrank', '53/39');"
+        "INSERT INTO cranksets (id, name, rings) VALUES (1, 'TestCrank', '50,34'), (2, 'AnotherCrank', '53,39');"
             .to_owned(),
     ))
     .await
@@ -48,7 +48,7 @@ pub async fn setup_cassettes_table(db: &DatabaseConnection) {
     .expect("Failed to create cassettes table");
     db.execute(Statement::from_string(
         db.get_database_backend(),
-        "INSERT INTO cassettes (id, name, sprockets) VALUES (1, 'TestCassette', '11-28'), (2, 'AnotherCassette', '12-32');"
+        "INSERT INTO cassettes (id, name, sprockets) VALUES (1, 'TestCassette', '11,12,13,14,15'), (2, 'AnotherCassette', '12,13,14,15,16');"
             .to_owned(),
     ))
     .await
@@ -75,4 +75,13 @@ pub async fn setup_tyres_table(db: &DatabaseConnection) {
     ))
     .await
     .expect("Failed to insert fake tyres");
+}
+
+/// Wrapper for above 4 functions in a single call.
+pub async fn complete_fake_db() -> Result<Arc<DatabaseConnection>, DbErr> {
+    let db = setup_fake_db().await.expect("Failed to create fake db");
+    setup_cranksets_table(db.as_ref()).await;
+    setup_cassettes_table(db.as_ref()).await;
+    setup_tyres_table(db.as_ref()).await;
+    Ok(db)
 }

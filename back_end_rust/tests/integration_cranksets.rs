@@ -14,10 +14,10 @@ async fn test_cranksets_get_all_with_fake_data() {
     assert_eq!(result.len(), 2);
     assert_eq!(result[0].id, 1);
     assert_eq!(result[0].name.as_deref(), Some("TestCrank"));
-    assert_eq!(result[0].rings.as_deref(), Some("50/34"));
+    assert_eq!(result[0].rings.as_deref(), Some("50,34"));
     assert_eq!(result[1].id, 2);
     assert_eq!(result[1].name.as_deref(), Some("AnotherCrank"));
-    assert_eq!(result[1].rings.as_deref(), Some("53/39"));
+    assert_eq!(result[1].rings.as_deref(), Some("53,39"));
 
     // Test get by ID 
     let singular_result = cranksets::Entity::get_by_id(&db, 2).await.expect("Query Failed").expect("Cassette not found");

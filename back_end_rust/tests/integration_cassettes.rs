@@ -14,10 +14,10 @@ async fn test_cassettes_get_all_with_fake_data() {
     assert_eq!(result.len(), 2);
     assert_eq!(result[0].id, 1);
     assert_eq!(result[0].name.as_deref(), Some("TestCassette"));
-    assert_eq!(result[0].sprockets.as_deref(), Some("11-28"));
+    assert_eq!(result[0].sprockets.as_deref(), Some("11,12,13,14,15"));
     assert_eq!(result[1].id, 2);
     assert_eq!(result[1].name.as_deref(), Some("AnotherCassette"));
-    assert_eq!(result[1].sprockets.as_deref(), Some("12-32"));
+    assert_eq!(result[1].sprockets.as_deref(), Some("12,13,14,15,16"));
     
     // Test get by ID 
     let singular_result = cassettes::Entity::get_by_id(&db, 2).await.expect("Query Failed").expect("Cassette not found");

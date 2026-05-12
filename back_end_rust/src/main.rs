@@ -1,12 +1,10 @@
 use dotenvy::dotenv;
-use axum::{routing::get,Router,};
-use sea_orm::DatabaseConnection;
 use std::sync::Arc;
 use tower_http::cors::{Any, CorsLayer};
 use http::{HeaderValue, Method};
 
-use crate::entities::{cranksets, cassettes, tyres};
-use crate::controllers::{get_cassettes, get_cranksets, get_tyres};
+mod app_builder;
+use app_builder::build_app;
 use back_end_rust::app_state::AppState;
 
 mod calculator;
@@ -33,12 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db = sea_orm::Database::connect(&db_url).await?;
     let state = AppState { db: Arc::new(db) };
 
-    let app = Router::new()
-        .route("/api/cassettes", get(get_cassettes))
-        .route("/api/cranksets", get(get_cranksets))
-        .route("/api/tyres", get(get_tyres))
-        .layer(cors)
-        .with_state(state);
+    let app = build_app(state, Some(cors));
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", server_port))
         .await
