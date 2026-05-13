@@ -15,6 +15,9 @@ pub struct Params {
     manual_chainring: Option<String>,
     manual_cassette: Option<String>,
     tyre_id: Option<u16>,
+    min_cadence: Option<u16>,
+    max_cadence: Option<u16>,
+    cadence_increment: Option<u16>
 }
 
 pub async fn get_cassettes(State(state): State<AppState>) -> impl IntoResponse {
@@ -93,13 +96,41 @@ async fn find_cassette_sprockets(db: &Arc<DatabaseConnection>, params: &Params,)
 async fn find_tyre_circumference(db: &Arc<DatabaseConnection>, params: &Params) -> Result<u16, (StatusCode, String)> {
     if let Some(id) = params.tyre_id.filter(|&id| id != 0) {
         match tyres::Entity::get_by_id(db, id).await {
-            Ok(Some(m)) => Ok(m.circumference),
+            Ok(Some(m)) => Ok(m.circumference as u16),
             Ok(None) => Err((StatusCode::NOT_FOUND, "Tyre ID not found".to_string())),
             Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
         }
     } else {
         Err((StatusCode::BAD_REQUEST, "Tyre ID not provided".to_string()))
     }
+}
+
+async fn get_cadence_list(params: &Params) -> Result<Vec<u16>, (StatusCode, String)> {
+    let min_cadence: u16 = match params.min_cadence {
+        Some(n) => n,
+        None => return Err((StatusCode::BAD_REQUEST, "min_cadence not provided".to_string())),
+    };
+    let max_cadence: u16 = match params.max_cadence {
+        Some(n) => n,
+        None => return Err((StatusCode::BAD_REQUEST, "max_cadence not provided".to_string())),
+    };
+    let cadence_increment: u16 = match params.cadence_increment {
+        Some(n) => n,
+        None => return Err((StatusCode::BAD_REQUEST, "cadence_increment not provided".to_string())),
+    };
+    if cadence_increment == 0 {
+        return Err((StatusCode::BAD_REQUEST, "cadence_increment must be greater than 0".to_string()));
+    }
+    if min_cadence > max_cadence {
+        return Err((StatusCode::BAD_REQUEST, "min_cadence cannot be greater than max_cadence".to_string()));
+    }
+    let cadence_list: Vec<u16> = (min_cadence..=max_cadence).step_by(cadence_increment as usize).collect();
+
+    if cadence_list.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "No cadence values produced with given parameters".to_string()));
+    }
+
+    Ok(cadence_list)
 }
 
 pub async fn get_calculate_ratio(State(state): State<AppState>, Query(params): Query<Params>) -> impl IntoResponse {
@@ -143,6 +174,37 @@ pub async fn get_calculate_rollout(State(state): State<AppState>, Query(params):
         "sprockets": cassette_sprockets,
         "tyre_circumference": tyre_circumference,
         "results": rollouts
+    }))
+    .into_response()
+}
+
+pub async fn get_calculate_speed(State(state): State<AppState>, Query(params): Query<Params>) -> impl IntoResponse {
+    let crankset_rings = match find_crankset_rings(&state.db, &params).await {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+    let cassette_sprockets = match find_cassette_sprockets(&state.db, &params).await {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+    let tyre_circumference = match find_tyre_circumference(&state.db, &params).await {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+
+    let cadence_list = match get_cadence_list(&params).await {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+
+    let speeds = calculate_speed(&crankset_rings, &cassette_sprockets, &tyre_circumference, &cadence_list);
+
+    Json(json!({
+        "chainrings": crankset_rings,
+        "sprockets": cassette_sprockets,
+        "tyre_circumference": tyre_circumference,
+        "cadences": cadence_list,
+        "results": speeds
     }))
     .into_response()
 }

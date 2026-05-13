@@ -12,7 +12,7 @@ pub fn build_app(state: AppState, cors: Option<CorsLayer>) -> Router {
         .route("/api/tyres", get(get_tyres))
         .route("/api/calculate/ratio", get(get_calculate_ratio))
         .route("/api/calculate/rollout", get(get_calculate_rollout))
-        // .route("/api/calculate/speed", get())
+        .route("/api/calculate/speed", get(get_calculate_speed))
         .with_state(state);
     if let Some(cors_layer) = cors {
         app = app.layer(cors_layer);
