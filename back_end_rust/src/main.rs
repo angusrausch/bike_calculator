@@ -1,4 +1,5 @@
 use dotenvy::dotenv;
+use tracing_subscriber::{fmt, EnvFilter};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use http::{HeaderValue, Method};
@@ -15,6 +16,11 @@ mod controllers;
 #[tokio::main]
 #[cfg(not(tarpaulin_include))]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // set default to trace so the TraceLayer emits request start/response/failure logs
+    fmt()
+        .with_env_filter(EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("trace")))
+        .init();
+
     dotenv().ok();
 
     let server_port = std::env::var("SERVER_PORT").expect("Server port must be set");
@@ -39,9 +45,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", server_port))
         .await
         .unwrap();
-        
-    
-    axum::serve(listener, app.into_make_service()).await.unwrap();
+
+    axum::serve(
+        listener,
+        app.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await
+    .unwrap();
 
     Ok(())
 }
