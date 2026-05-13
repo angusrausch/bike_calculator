@@ -1,5 +1,5 @@
-use axum::{Router, routing::get};
-use tower_http::cors::{Any, CorsLayer};
+use axum::{Router, routing::{get, post}};
+use tower_http::cors::CorsLayer;
 use http::{HeaderValue, Method};
 use std::sync::Arc;
 use crate::controllers::{*};
@@ -15,6 +15,9 @@ pub fn build_app(state: AppState, cors: Option<CorsLayer>) -> Router {
         .route("/api/calculate/speed", get(get_calculate_speed))
         .route("/api/get-google-maps-key", get(get_google_maps_key))
         .route("/api/get-strava-client-id", get(get_strava_client_id))
+        .route("/api/strava-login", post(post_strava_login))
+        .route("/api/strava-refresh", post(post_strava_refresh))
+        .route("/api/strava-logout", post(post_strava_logout))
         .with_state(state);
     if let Some(cors_layer) = cors {
         app = app.layer(cors_layer);

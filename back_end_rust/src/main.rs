@@ -1,7 +1,8 @@
 use dotenvy::dotenv;
 use std::sync::Arc;
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::cors::CorsLayer;
 use http::{HeaderValue, Method};
+use http::header::{CONTENT_TYPE, AUTHORIZATION};
 
 mod app_builder;
 use app_builder::build_app;
@@ -25,8 +26,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let cors = CorsLayer::new()
         .allow_origin(frontend_url)
-        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
-        .allow_headers(Any);
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION])
+        .allow_credentials(true);
 
     let db = sea_orm::Database::connect(&db_url).await?;
     let state = AppState { db: Arc::new(db) };
