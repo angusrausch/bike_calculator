@@ -325,3 +325,104 @@ async fn test_calculate_manual_speed() {
     let api_cadence_list: Vec<u16> = serde_json::from_value(json["cadences"].clone()).expect("Invalid result format");
     assert_eq!(api_cadence_list, cadence_list);
 }
+
+#[tokio::test]
+async fn test_invalid_requests() {    
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    for url_part in ["ratio", "rollout", "speed"] {
+        for params in [
+            "",
+            "cassette_id=1&tyre_id=1",
+            "crankset_id=1&tyre_id=1",
+            "cassette_id=1&cassette_id=1"
+        ] {
+            let url = format!("/api/calculate/{}?{}", url_part, params);
+            let response: axum_test::TestResponse = server.get(&url).await;
+            if url_part != "ratio" && params != "cassette_id=1&cassette_id=1" {
+                assert_eq!(response.status_code(), 400);
+                let body = response.text();
+                let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+                assert!(json["error"].is_string());
+            }
+        }
+    }
+}
+
+#[tokio::test]
+async fn test_invalid_id_requests() {
+    let working_id = 1;
+    let broken_id = 99;
+    
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    for url_part in ["ratio", "rollout", "speed"] {
+        for params in [[broken_id, working_id, working_id], [working_id, broken_id, working_id], [working_id, working_id, broken_id], [broken_id, broken_id, broken_id]] {
+            let url = format!("/api/calculate/{}?crankset_id={}&cassette_id={}&tyre_id={}&min_cadence=50&max_cadence=100&cadence_increment=25", url_part, params[0], params[1], params[2]);
+            let response: axum_test::TestResponse = server.get(&url).await;
+            if url_part != "ratio" && params != [0, 0, 1] {
+                assert_eq!(response.status_code(), 404);
+                let body = response.text();
+                let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+                let expected = if params[0] == broken_id {
+                    "Crankset not found"
+                } else if params[1] == broken_id {
+                    "Cassette not found"
+                } else {
+                    "Tyre not found"
+                };
+                assert_eq!(json["error"].as_str().expect("No error string"), expected);
+            }
+        }
+    }
+}
+
+#[tokio::test]
+async fn test_invalid_manual_requests() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+
+    for url_part in ["ratio", "rollout", "speed"] {
+        for params in [["1a,12", "11,12"], ["11,12", "1a,12"]] {
+            let url = format!("/api/calculate/speed?manual_chainring={}&manual_cassette={}&tyre_id=1&min_cadence=100&max_cadence=200&cadence_increment=50", encode(params[0]), encode(params[1]));
+            let response: axum_test::TestResponse = server.get(&url).await;
+            assert_eq!(response.status_code(), 400);
+            let body = response.text();
+            let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+            let expected = if params[0] == "1a,12" {
+                "Invalid Manual Crankset"
+            } else {
+                "Invalid Manual Cassette"
+            };
+            assert_eq!(json["error"].as_str().expect("No error string"), expected);
+        }
+    }
+}
+
+#[tokio::test]
+async fn test_invalid_cadences() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+
+    for params in [["5a", "100", "10"], ["50", "10a", "10"], ["50", "100", "1a"], ["100", "50", "10"], ["50", "100", "0"]] {
+        let url = format!("/api/calculate/speed?crankset_id=1&cassette_id=1&tyre_id=1&min_cadence={}&max_cadence={}&cadence_increment={}", params[0], params[1], params[2]);
+        let response: axum_test::TestResponse = server.get(&url).await;
+        assert_eq!(response.status_code(), 400);
+        let body = response.text();
+        let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+        assert!(json["error"].is_string());
+    }
+}
