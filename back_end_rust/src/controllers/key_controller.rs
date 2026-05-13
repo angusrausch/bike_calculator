@@ -3,7 +3,6 @@ use axum::body::{Body, to_bytes};
 use serde_json::json;
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
-use reqwest::Error;
 use std::collections::HashMap;
 use http::{HeaderMap, HeaderValue};
 use http::header::SET_COOKIE;

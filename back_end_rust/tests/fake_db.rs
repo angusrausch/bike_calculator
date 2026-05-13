@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use sea_orm::{Database, DatabaseConnection, DbErr, ConnectOptions};
 use std::sync::Arc;
 

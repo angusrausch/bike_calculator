@@ -1,4 +1,4 @@
-use crate::entities::{cassettes, cranksets, tyres};
+use crate::entities::prelude::*;
 use crate::calculator::{calculate_ratios, calculate_rollout, calculate_speed};
 use crate::AppState;
 use std::sync::Arc;
@@ -21,21 +21,21 @@ pub struct Params {
 }
 
 pub async fn get_cassettes(State(state): State<AppState>) -> impl IntoResponse {
-    match cassettes::Entity::get_all(&state.db).await {
+    match Cassettes::get_all(&state.db).await {
         Ok(c) => Json(c).into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }
 }
 
 pub async fn get_cranksets(State(state): State<AppState>) -> impl IntoResponse {
-    match cranksets::Entity::get_all(&state.db).await {
+    match Cranksets::get_all(&state.db).await {
         Ok(c) => Json(c).into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }
 }
 
 pub async fn get_tyres(State(state): State<AppState>) -> impl IntoResponse {
-    match tyres::Entity::get_all(&state.db).await {
+    match Tyres::get_all(&state.db).await {
         Ok(t) => Json(t).into_response(),
         Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response(),
     }
@@ -57,7 +57,7 @@ fn parse_gear_string(input: &str) -> Result<Vec<u16>, String> {
 
 async fn find_crankset_rings(db: &Arc<DatabaseConnection>, params: &Params,) -> Result<Vec<u16>, (StatusCode, String)> {
     if let Some(id) = params.crankset_id.filter(|&id| id != 0) {
-        match cranksets::Entity::get_by_id(db, id).await {
+        match Cranksets::get_by_id(db, id).await {
             Ok(Some(m)) => match m.rings_vec() {
                 Ok(v) => Ok(v),
                 Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
@@ -69,14 +69,14 @@ async fn find_crankset_rings(db: &Arc<DatabaseConnection>, params: &Params,) -> 
         let manual = params.manual_chainring.clone().unwrap_or_default();
         match parse_gear_string(&manual) {
             Ok(v) => Ok(v),
-            Err(e) => Err((StatusCode::BAD_REQUEST, format!("Invalid Manual Crankset"))),
+            Err(_) => Err((StatusCode::BAD_REQUEST, format!("Invalid Manual Crankset"))),
         }
     }
 }
 
 async fn find_cassette_sprockets(db: &Arc<DatabaseConnection>, params: &Params,) -> Result<Vec<u16>, (StatusCode, String)> {
     if let Some(id) = params.cassette_id.filter(|&id| id != 0) {
-        match cassettes::Entity::get_by_id(db, id).await {
+        match Cassettes::get_by_id(db, id).await {
             Ok(Some(m)) => match m.sprockets_vec() {
                 Ok(v) => Ok(v),
                 Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
@@ -88,14 +88,14 @@ async fn find_cassette_sprockets(db: &Arc<DatabaseConnection>, params: &Params,)
         let manual = params.manual_cassette.clone().unwrap_or_default();
         match parse_gear_string(&manual) {
             Ok(v) => Ok(v),
-            Err(e) => Err((StatusCode::BAD_REQUEST, format!("Invalid Manual Cassette"))),
+            Err(_) => Err((StatusCode::BAD_REQUEST, format!("Invalid Manual Cassette"))),
         }
     }
 }
 
 async fn find_tyre_circumference(db: &Arc<DatabaseConnection>, params: &Params) -> Result<u16, (StatusCode, String)> {
     if let Some(id) = params.tyre_id.filter(|&id| id != 0) {
-        match tyres::Entity::get_by_id(db, id).await {
+        match Tyres::get_by_id(db, id).await {
             Ok(Some(m)) => Ok(m.circumference as u16),
             Ok(None) => Err((StatusCode::NOT_FOUND, "Tyre not found".to_string())),
             Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),

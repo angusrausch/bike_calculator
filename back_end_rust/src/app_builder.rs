@@ -1,7 +1,5 @@
 use axum::{Router, routing::{get, post}};
 use tower_http::cors::CorsLayer;
-use http::{HeaderValue, Method};
-use std::sync::Arc;
 use crate::controllers::{*};
 use crate::AppState;
 

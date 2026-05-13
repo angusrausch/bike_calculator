@@ -103,11 +103,11 @@ async fn test_calculate_ratio() {
 
     let crankset_rings_vec = match crankset.rings_vec() {
         Ok(v) => v,
-        Err(e) => panic!("Invalid Crankset"),
+        Err(_) => panic!("Invalid Crankset"),
     };
     let cassette_sprockets_vec = match cassette.sprockets_vec() {
         Ok(v) => v,
-        Err(e) => panic!("Invalid Cassette")
+        Err(_) => panic!("Invalid Cassette")
     };
 
     let url = format!("/api/calculate/ratio?crankset_id={}&cassette_id={}", crankset_id, cassette_id);
@@ -123,7 +123,7 @@ async fn test_calculate_ratio() {
 
     let expected = calculate_ratios(&crankset_rings_vec, &cassette_sprockets_vec);
 
-    let api_result: Vec<Vec<f32>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
     assert_eq!(api_result, expected);
 
     let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
@@ -155,7 +155,7 @@ async fn test_calculate_manual_ratio() {
 
     let expected = calculate_ratios(&crankset, &cassette);
 
-    let api_result: Vec<Vec<f32>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
     assert_eq!(api_result, expected);
 
     let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
@@ -177,11 +177,11 @@ async fn test_calculate_rollout() {
 
     let crankset_rings_vec = match crankset.rings_vec() {
         Ok(v) => v,
-        Err(e) => panic!("Invalid Crankset"),
+        Err(_) => panic!("Invalid Crankset"),
     };
     let cassette_sprockets_vec = match cassette.sprockets_vec() {
         Ok(v) => v,
-        Err(e) => panic!("Invalid Cassette")
+        Err(_) => panic!("Invalid Cassette")
     };
     let tyre_circumference: u16 = tyre.circumference as u16;
 
@@ -198,7 +198,7 @@ async fn test_calculate_rollout() {
 
     let expected = calculate_rollout(&crankset_rings_vec, &cassette_sprockets_vec, &tyre_circumference);
 
-    let api_result: Vec<Vec<f32>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
     assert_eq!(api_result, expected);
 
     let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
@@ -234,7 +234,7 @@ async fn test_calculate_manual_rollout() {
 
     let expected = calculate_rollout(&crankset, &cassette, &tyre_circumference);
 
-    let api_result: Vec<Vec<f32>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
     assert_eq!(api_result, expected);
 
     let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
@@ -263,11 +263,11 @@ async fn test_calculate_speed() {
 
     let crankset_rings_vec = match crankset.rings_vec() {
         Ok(v) => v,
-        Err(e) => panic!("Invalid Crankset"),
+        Err(_) => panic!("Invalid Crankset"),
     };
     let cassette_sprockets_vec = match cassette.sprockets_vec() {
         Ok(v) => v,
-        Err(e) => panic!("Invalid Cassette")
+        Err(_) => panic!("Invalid Cassette")
     };
     let tyre_circumference: u16 = tyre.circumference as u16;
 
@@ -413,20 +413,18 @@ async fn test_invalid_manual_requests() {
     let server = TestServer::new(app);
 
 
-    for url_part in ["ratio", "rollout", "speed"] {
-        for params in [["1a,12", "11,12"], ["11,12", "1a,12"]] {
-            let url = format!("/api/calculate/speed?manual_chainring={}&manual_cassette={}&tyre_id=1&min_cadence=100&max_cadence=200&cadence_increment=50", encode(params[0]), encode(params[1]));
-            let response: axum_test::TestResponse = server.get(&url).await;
-            assert_eq!(response.status_code(), 400);
-            let body = response.text();
-            let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
-            let expected = if params[0] == "1a,12" {
-                "Invalid Manual Crankset"
-            } else {
-                "Invalid Manual Cassette"
-            };
-            assert_eq!(json["error"].as_str().expect("No error string"), expected);
-        }
+    for params in [["1a,12", "11,12"], ["11,12", "1a,12"]] {
+        let url = format!("/api/calculate/ratio?manual_chainring={}&manual_cassette={}", encode(params[0]), encode(params[1]));
+        let response: axum_test::TestResponse = server.get(&url).await;
+        assert_eq!(response.status_code(), 400);
+        let body = response.text();
+        let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+        let expected = if params[0] == "1a,12" {
+            "Invalid Manual Crankset"
+        } else {
+            "Invalid Manual Cassette"
+        };
+        assert_eq!(json["error"].as_str().expect("No error string"), expected);
     }
 }
 
