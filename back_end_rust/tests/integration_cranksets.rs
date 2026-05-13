@@ -1,4 +1,4 @@
-use back_end_rust::entities::cranksets;
+use bike_calculator_backend::entities::cranksets;
 mod fake_db;
 use fake_db::setup_fake_db;
 

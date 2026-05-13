@@ -1,4 +1,4 @@
-use back_end_rust::entities::tyres;
+use bike_calculator_backend::entities::tyres;
 mod fake_db;
 use fake_db::setup_fake_db;
 

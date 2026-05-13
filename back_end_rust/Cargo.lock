@@ -221,24 +221,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "back_end_rust"
-version = "0.1.0"
-dependencies = [
- "approx",
- "axum",
- "axum-test",
- "dotenvy",
- "http",
- "reqwest",
- "sea-orm",
- "serde",
- "serde_json",
- "tokio",
- "tower-http",
- "urlencoding",
-]
-
-[[package]]
 name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -262,6 +244,24 @@ dependencies = [
  "num-integer",
  "num-traits",
  "serde",
+]
+
+[[package]]
+name = "bike_calculator_backend"
+version = "0.1.0"
+dependencies = [
+ "approx",
+ "axum",
+ "axum-test",
+ "dotenvy",
+ "http",
+ "reqwest",
+ "sea-orm",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower-http",
+ "urlencoding",
 ]
 
 [[package]]

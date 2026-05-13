@@ -1,8 +1,8 @@
 use axum_test::TestServer;
 use serde_json::Value;
 use std::env;
-use back_end_rust::app_state::AppState;
-use back_end_rust::app_builder::build_app;
+use bike_calculator_backend::app_state::AppState;
+use bike_calculator_backend::app_builder::build_app;
 mod fake_db;
 
 #[tokio::test]

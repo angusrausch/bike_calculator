@@ -6,7 +6,7 @@ use http::header::{CONTENT_TYPE, AUTHORIZATION};
 
 mod app_builder;
 use app_builder::build_app;
-use back_end_rust::app_state::AppState;
+use bike_calculator_backend::AppState;
 
 mod calculator;
 mod entities;

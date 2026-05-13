@@ -1,5 +1,5 @@
 use approx::assert_relative_eq;
-use back_end_rust::calculator::{*};
+use bike_calculator_backend::calculator::{*};
 
 const TEST_CRANKSET: [u16; 2] = [50, 100];
 const TEST_CASSETTE: [u16; 5] = [10, 20, 30, 40, 50];

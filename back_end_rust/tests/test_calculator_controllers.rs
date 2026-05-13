@@ -1,10 +1,10 @@
 use axum_test::TestServer;
 mod fake_db;
-use back_end_rust::entities::{cassettes, cranksets, tyres};
-use back_end_rust::calculator::{calculate_ratios, calculate_rollout, calculate_speed};
+use bike_calculator_backend::entities::{cassettes, cranksets, tyres};
+use bike_calculator_backend::calculator::{calculate_ratios, calculate_rollout, calculate_speed};
 use urlencoding::encode;
-use back_end_rust::app_builder::build_app;
-use back_end_rust::app_state::AppState;
+use bike_calculator_backend::app_builder::build_app;
+use bike_calculator_backend::app_state::AppState;
 use approx::assert_relative_eq;
 use crate::fake_db::{complete_fake_db, setup_fake_db, setup_cassettes_table, setup_cranksets_table, setup_tyres_table};
 
