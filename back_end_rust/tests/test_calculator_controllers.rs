@@ -6,9 +6,7 @@ use urlencoding::encode;
 use back_end_rust::app_builder::build_app;
 use back_end_rust::app_state::AppState;
 use approx::assert_relative_eq;
-
-
-use crate::fake_db::complete_fake_db;
+use crate::fake_db::{complete_fake_db, setup_fake_db, setup_cassettes_table, setup_cranksets_table, setup_tyres_table};
 
 #[tokio::test]
 async fn test_get_cranksets() {
@@ -28,6 +26,14 @@ async fn test_get_cranksets() {
     assert_eq!(json[1]["id"], 2);
     assert_eq!(json[1]["name"], "AnotherCrank");
     assert_eq!(json[1]["rings"], "53,39");
+
+    // Check when db doesn't contain data
+    let db = setup_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+    let response = server.get("/api/cranksets").await;
+    assert_eq!(response.status_code(), 500);
 }
 
 #[tokio::test]
@@ -48,6 +54,14 @@ async fn test_get_cassette() {
     assert_eq!(json[1]["id"], 2);
     assert_eq!(json[1]["name"], "AnotherCassette");
     assert_eq!(json[1]["sprockets"], "12,13,14,15,16");
+
+    // Check when db doesn't contain data
+    let db = setup_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+    let response = server.get("/api/cassettes").await;
+    assert_eq!(response.status_code(), 500);
 }
 
 #[tokio::test]
@@ -68,6 +82,14 @@ async fn test_get_tyre() {
     assert_eq!(json[1]["id"], 2);
     assert_eq!(json[1]["name"], "AnotherTyre");
     assert_eq!(json[1]["circumference"], 2150);
+
+    // Check when db doesn't contain data
+    let db = setup_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+    let response = server.get("/api/tyres").await;
+    assert_eq!(response.status_code(), 500);
 }
 
 #[tokio::test]
@@ -338,7 +360,7 @@ async fn test_invalid_requests() {
             "",
             "cassette_id=1&tyre_id=1",
             "crankset_id=1&tyre_id=1",
-            "cassette_id=1&cassette_id=1"
+            "crankset_id=1&cassette_id=1"
         ] {
             let url = format!("/api/calculate/{}?{}", url_part, params);
             let response: axum_test::TestResponse = server.get(&url).await;
@@ -424,5 +446,51 @@ async fn test_invalid_cadences() {
         let body = response.text();
         let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
         assert!(json["error"].is_string());
+    }
+}
+
+#[tokio::test]
+async fn test_cadence_defaults() {
+    let expected_cadence_list = vec![60, 70, 80, 90, 100, 110, 120];
+
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+
+    for params in [["60", "120", ""], ["60", "", "10"], ["", "120", "10"], ["", "", ""]] {
+        let url = format!("/api/calculate/speed?crankset_id=1&cassette_id=1&tyre_id=1&min_cadence={}&max_cadence={}&cadence_increment={}", params[0], params[1], params[2]);
+        let response: axum_test::TestResponse = server.get(&url).await;
+        assert_eq!(response.status_code(), 200);
+        let body = response.text();
+        let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+        let api_cadence_list: Vec<u16> = serde_json::from_value(json["cadences"].clone()).expect("Invalid result format");
+        assert_eq!(api_cadence_list, expected_cadence_list);
+    }
+}
+
+#[tokio::test]
+async fn test_database_errors() {
+    let no_crankset_db = setup_fake_db().await.expect("Failed to create fake db");
+    setup_cassettes_table(no_crankset_db.as_ref()).await;
+    setup_tyres_table(no_crankset_db.as_ref()).await;
+
+    let no_cassette_db = setup_fake_db().await.expect("Failed to create fake db");
+    setup_cranksets_table(no_cassette_db.as_ref()).await;
+    setup_tyres_table(no_cassette_db.as_ref()).await;
+
+    let no_tyre_db = setup_fake_db().await.expect("Failed to create fake db");
+    setup_cranksets_table(no_tyre_db.as_ref()).await;
+    setup_cassettes_table(no_tyre_db.as_ref()).await;
+
+    for db in [no_crankset_db, no_cassette_db, no_tyre_db] {
+        let state = AppState { db };
+        let app = build_app(state, None);
+        let server = TestServer::new(app);
+
+        let url = format!("/api/calculate/rollout?crankset_id=1&cassette_id=1&tyre_id=1");
+        let response: axum_test::TestResponse = server.get(&url).await;
+        assert_eq!(response.status_code(), 500);
     }
 }
