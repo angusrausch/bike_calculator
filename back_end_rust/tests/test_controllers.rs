@@ -2,7 +2,7 @@ use axum_test::TestServer;
 mod fake_db;
 use back_end_rust::entities::{cassettes, cranksets};
 use back_end_rust::calculator::calculate_ratios;
-use fake_db::setup_fake_db;
+use urlencoding::encode;
 use back_end_rust::app_builder::build_app;
 use back_end_rust::app_state::AppState;
 
@@ -107,4 +107,36 @@ async fn test_calculate_ratio() {
     assert_eq!(api_chainrings, crankset_rings_vec);
     let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
     assert_eq!(api_sprockets, cassette_sprockets_vec);
+}
+
+#[tokio::test]
+async fn test_calculate_manual_ratio() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+
+    let crankset = vec![52, 36];
+    let cassette = vec![11, 12, 13];
+
+    let manual_chainring = crankset.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+    let manual_cassette = cassette.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+
+    let url = format!("/api/calculate/ratio?manual_chainring={}&manual_cassette={}", encode(&manual_chainring), encode(&manual_cassette));
+
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    let response = server.get(&url).await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+
+    let expected = calculate_ratios(&crankset, &cassette);
+
+    let api_result: Vec<Vec<f32>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    assert_eq!(api_result, expected);
+
+    let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
+    assert_eq!(api_chainrings, crankset);
+    let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
+    assert_eq!(api_sprockets, cassette);
 }
