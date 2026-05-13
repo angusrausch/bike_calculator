@@ -8,6 +8,7 @@ use std::collections::HashMap;
 use http::{HeaderMap, HeaderValue};
 use http::header::SET_COOKIE;
 
+#[cfg(not(tarpaulin_include))]
 fn encode_form(data: &HashMap<&str, String>) -> String {
     data.iter()
         .map(|(k, v)| format!("{}={}", urlencoding::encode(k), urlencoding::encode(v)))
@@ -30,24 +31,29 @@ async fn strava_client_id() -> String {
     std::env::var("STRAVA_CLIENT_ID").expect("Strava Client ID must be set")
 }
 
+#[cfg(not(tarpaulin_include))]
 async fn strava_secret() -> String {
     std::env::var("STRAVA_SECRET").expect("Strava Secret must be set")
 }
 
+#[cfg(not(tarpaulin_include))]
 async fn frontend_url() -> String {
     std::env::var("FRONTEND_URL").expect("Frontend URL must be set")
 }
 
+#[cfg(not(tarpaulin_include))]
 pub async fn secure_frontend() -> bool {
     std::env::var("FRONTEND_SECURE").expect("Frontend Secure must be set").to_lowercase() == "true"
 }
 
+#[cfg(not(tarpaulin_include))]
 pub async fn get_strava_client_id() -> impl IntoResponse {
     Json(json!({
         "strava_client_id": strava_client_id().await
     }))
 }
 
+#[cfg(not(tarpaulin_include))]
 pub async fn post_strava_login(Query(params): Query<Params>) -> impl IntoResponse {
     let code = match params.code.as_ref().filter(|s| !s.trim().is_empty()) {
         Some(c) => c.clone(),
@@ -105,6 +111,7 @@ pub async fn post_strava_login(Query(params): Query<Params>) -> impl IntoRespons
     return (StatusCode::OK, headers, Json(data_json)).into_response();
 }
 
+#[cfg(not(tarpaulin_include))]
 pub async fn post_strava_refresh(headers: HeaderMap) -> impl IntoResponse {
     // Parse cookie header to extract refresh token
     let cookie_header = headers.get("cookie");
@@ -170,6 +177,7 @@ pub async fn post_strava_refresh(headers: HeaderMap) -> impl IntoResponse {
     return (StatusCode::OK, resp_headers, Json(data_json)).into_response();
 }
 
+#[cfg(not(tarpaulin_include))]
 pub async fn post_strava_logout(Query(params): Query<HashMap<String, String>>, req: axum::http::Request<Body>) -> impl IntoResponse {
     // Read entire body (could be form-encoded or JSON) and parse for accessToken
     let whole = match to_bytes(req.into_body(), 65536).await {

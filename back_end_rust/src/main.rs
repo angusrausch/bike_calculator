@@ -13,6 +13,7 @@ mod entities;
 mod controllers;
 
 #[tokio::main]
+#[cfg(not(tarpaulin_include))]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
