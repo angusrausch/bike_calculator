@@ -13,6 +13,8 @@ pub fn build_app(state: AppState, cors: Option<CorsLayer>) -> Router {
         .route("/api/calculate/ratio", get(get_calculate_ratio))
         .route("/api/calculate/rollout", get(get_calculate_rollout))
         .route("/api/calculate/speed", get(get_calculate_speed))
+        .route("/api/get-google-maps-key", get(get_google_maps_key))
+        .route("/api/get-strava-client-id", get(get_strava_client_id))
         .with_state(state);
     if let Some(cors_layer) = cors {
         app = app.layer(cors_layer);
