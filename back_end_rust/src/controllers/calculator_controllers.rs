@@ -1,5 +1,5 @@
 use crate::entities::{cassettes, cranksets, tyres};
-use crate::calculator::calculate_ratios;
+use crate::calculator::{calculate_ratios, calculate_rollout, calculate_speed};
 use crate::AppState;
 use std::sync::Arc;
 use sea_orm::DatabaseConnection;
@@ -90,6 +90,18 @@ async fn find_cassette_sprockets(db: &Arc<DatabaseConnection>, params: &Params,)
     }
 }
 
+async fn find_tyre_circumference(db: &Arc<DatabaseConnection>, params: &Params) -> Result<u16, (StatusCode, String)> {
+    if let Some(id) = params.tyre_id.filter(|&id| id != 0) {
+        match tyres::Entity::get_by_id(db, id).await {
+            Ok(Some(m)) => Ok(m.circumference),
+            Ok(None) => Err((StatusCode::NOT_FOUND, "Tyre ID not found".to_string())),
+            Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+        }
+    } else {
+        Err((StatusCode::BAD_REQUEST, "Tyre ID not provided".to_string()))
+    }
+}
+
 pub async fn get_calculate_ratio(State(state): State<AppState>, Query(params): Query<Params>) -> impl IntoResponse {
     let crankset_rings = match find_crankset_rings(&state.db, &params).await {
         Ok(v) => v,
@@ -106,6 +118,31 @@ pub async fn get_calculate_ratio(State(state): State<AppState>, Query(params): Q
         "chainrings": crankset_rings,
         "sprockets": cassette_sprockets,
         "results": ratios
+    }))
+    .into_response()
+}
+
+pub async fn get_calculate_rollout(State(state): State<AppState>, Query(params): Query<Params>) -> impl IntoResponse {
+    let crankset_rings = match find_crankset_rings(&state.db, &params).await {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+    let cassette_sprockets = match find_cassette_sprockets(&state.db, &params).await {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+    let tyre_circumference = match find_tyre_circumference(&state.db, &params).await {
+        Ok(v) => v,
+        Err(e) => return e.into_response(),
+    };
+
+    let rollouts = calculate_rollout(&crankset_rings, &cassette_sprockets, &tyre_circumference);
+
+    Json(json!({
+        "chainrings": crankset_rings,
+        "sprockets": cassette_sprockets,
+        "tyre_circumference": tyre_circumference,
+        "results": rollouts
     }))
     .into_response()
 }

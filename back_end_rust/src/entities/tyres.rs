@@ -9,7 +9,7 @@ use sea_orm::{DatabaseConnection, EntityTrait, QueryFilter, ColumnTrait, DbErr};
 pub struct Model {
     #[sea_orm(primary_key)]
     pub id: i64,
-    pub circumference: i32,
+    pub circumference: u16,
     pub name: Option<String>,
 }
 

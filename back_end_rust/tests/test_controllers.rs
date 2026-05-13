@@ -1,7 +1,7 @@
 use axum_test::TestServer;
 mod fake_db;
-use back_end_rust::entities::{cassettes, cranksets};
-use back_end_rust::calculator::calculate_ratios;
+use back_end_rust::entities::{cassettes, cranksets, tyres};
+use back_end_rust::calculator::{calculate_ratios, calculate_rollout};
 use urlencoding::encode;
 use back_end_rust::app_builder::build_app;
 use back_end_rust::app_state::AppState;
@@ -139,4 +139,85 @@ async fn test_calculate_manual_ratio() {
     assert_eq!(api_chainrings, crankset);
     let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
     assert_eq!(api_sprockets, cassette);
+}
+
+
+#[tokio::test]
+async fn test_calculate_rollout() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let crankset_id = 2;
+    let cassette_id = 2;
+    let tyre_id = 1;
+
+    let crankset = cranksets::Entity::get_by_id(&db, crankset_id).await.expect("Query Failed").expect("Crankset not found");
+    let cassette = cassettes::Entity::get_by_id(&db, cassette_id).await.expect("Query Failed").expect("Cassette not found");
+    let tyre = tyres::Entity::get_by_id(&db, tyre_id).await.expect("Query Failed").expect("Tyre not found");
+
+    let crankset_rings_vec = match crankset.rings_vec() {
+        Ok(v) => v,
+        Err(e) => panic!("Invalid Crankset"),
+    };
+    let cassette_sprockets_vec = match cassette.sprockets_vec() {
+        Ok(v) => v,
+        Err(e) => panic!("Invalid Cassette")
+    };
+    let tyre_circumference: u16 = tyre.circumference;
+
+    let url = format!("/api/calculate/rollout?crankset_id={}&cassette_id={}&tyre_id={}", crankset_id, cassette_id, tyre_id);
+    
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    let response = server.get(&url).await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+
+    let expected = calculate_rollout(&crankset_rings_vec, &cassette_sprockets_vec, &tyre_circumference);
+
+    let api_result: Vec<Vec<f32>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    assert_eq!(api_result, expected);
+
+    let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
+    assert_eq!(api_chainrings, crankset_rings_vec);
+    let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
+    assert_eq!(api_sprockets, cassette_sprockets_vec);
+    assert_eq!(tyre_circumference, json["tyre_circumference"]);
+}
+
+#[tokio::test]
+async fn test_calculate_manual_rollout() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+
+    let crankset = vec![52, 36];
+    let cassette = vec![11, 12, 13];
+    let tyre_id = 1;
+    let tyre = tyres::Entity::get_by_id(&db, tyre_id).await.expect("Query Failed").expect("Tyre not found");
+    
+    let manual_chainring = crankset.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+    let manual_cassette = cassette.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+    let tyre_circumference: u16 = tyre.circumference;
+
+    let url = format!("/api/calculate/rollout?manual_chainring={}&manual_cassette={}&tyre_id={}", encode(&manual_chainring), encode(&manual_cassette), tyre_id);
+
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    let response = server.get(&url).await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+
+    let expected = calculate_rollout(&crankset, &cassette, &tyre_circumference);
+
+    let api_result: Vec<Vec<f32>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    assert_eq!(api_result, expected);
+
+    let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
+    assert_eq!(api_chainrings, crankset);
+    let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
+    assert_eq!(api_sprockets, cassette);
+    assert_eq!(tyre_circumference, json["tyre_circumference"]);
 }
