@@ -34,10 +34,20 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: linux-x86_64
+          - name: x86_64-gnu
             runner: ubuntu-latest
-          - name: linux-arm64
+            target: x86_64-unknown-linux-gnu
+          - name: aarch64-gnu
             runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - name: x86_64-musl
+            runner: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            musl: true
+          - name: aarch64-musl
+            runner: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-musl
+            musl: true
 
     defaults:
       run:
@@ -46,13 +56,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: actions-rust-lang/setup-rust-toolchain@v1
-      - name: Build Release
-        run: cargo build --release
-      - name: Upload Release Artifact
+      - name: Add target
+        run: rustup target add ${{ matrix.target }}
+      - name: Prepare musl toolchain (Ubuntu runners)
+        if: ${{ matrix.musl == 'true' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools gcc make pkg-config
+      - name: Build release
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Upload release artifact
         uses: actions/upload-artifact@v7
         with:
           name: bike_calculator_backend-release-${{ matrix.name }}
-          path: back_end_rust/target/release/bike_calculator_backend
+          path: back_end_rust/target/${{ matrix.target }}/release/bike_calculator_backend
           retention-days: 28
           overwrite: true
 

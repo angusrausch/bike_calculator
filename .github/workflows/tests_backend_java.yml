@@ -25,5 +25,5 @@ jobs:
       uses: actions/upload-artifact@v7
       with:
         name: code-coverage-report-java
-        path: target/site/jacoco
+        path: back_end_java/target/site/jacoco
         retention-days: 7
