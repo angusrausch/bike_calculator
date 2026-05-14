@@ -1,0 +1,55 @@
+name: Backend_Rust
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test_rust:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./back_end_rust
+    steps:
+    - uses: actions/checkout@v6
+    - name: Run Tests
+      run: |
+        docker run --security-opt seccomp=unconfined -v $(pwd):/app --workdir /app xd009642/tarpaulin cargo tarpaulin --out Html
+    - name: Upload code coverage results
+      uses: actions/upload-artifact@v7
+      with:
+        name: code-coverage-report-rust
+        path: back_end_rust/tarpaulin-report.html
+        retention-days: 7
+
+  build_linux:
+    needs: test_rust
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - name: linux-x86_64
+            runner: ubuntu-latest
+          - name: linux-arm64
+            runner: ubuntu-24.04-arm64
+
+    container: rust:1-alpine3.22
+    defaults:
+      run:
+        working-directory: ./back_end_rust
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build Release
+        run: cargo build --release
+      
+      - name: Upload Release Artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: bike_calculator_backend-release-${{ matrix.name }}
+          path: back_end_rust/target/release/bike_calculator_backend
+          retention-days: 28
+          overwrite: true
+

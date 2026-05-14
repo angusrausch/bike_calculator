@@ -1,0 +1,494 @@
+use axum_test::TestServer;
+mod fake_db;
+use bike_calculator_backend::entities::{cassettes, cranksets, tyres};
+use bike_calculator_backend::calculator::{calculate_ratios, calculate_rollout, calculate_speed};
+use urlencoding::encode;
+use bike_calculator_backend::app_builder::build_app;
+use bike_calculator_backend::app_state::AppState;
+use approx::assert_relative_eq;
+use crate::fake_db::{complete_fake_db, setup_fake_db, setup_cassettes_table, setup_cranksets_table, setup_tyres_table};
+
+#[tokio::test]
+async fn test_get_cranksets() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+    let response = server.get("/api/cranksets").await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+    // Check that the response is an array and has the expected fake data
+    assert!(json.is_array());
+    assert_eq!(json[0]["id"], 1);
+    assert_eq!(json[0]["name"], "TestCrank");
+    assert_eq!(json[0]["rings"], "50,34");
+    assert_eq!(json[1]["id"], 2);
+    assert_eq!(json[1]["name"], "AnotherCrank");
+    assert_eq!(json[1]["rings"], "53,39");
+
+    // Check when db doesn't contain data
+    let db = setup_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+    let response = server.get("/api/cranksets").await;
+    assert_eq!(response.status_code(), 500);
+}
+
+#[tokio::test]
+async fn test_get_cassette() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+    let response = server.get("/api/cassettes").await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+    // Check that the response is an array and has the expected fake data
+    assert!(json.is_array());
+    assert_eq!(json[0]["id"], 1);
+    assert_eq!(json[0]["name"], "TestCassette");
+    assert_eq!(json[0]["sprockets"], "11,12,13,14,15");
+    assert_eq!(json[1]["id"], 2);
+    assert_eq!(json[1]["name"], "AnotherCassette");
+    assert_eq!(json[1]["sprockets"], "12,13,14,15,16");
+
+    // Check when db doesn't contain data
+    let db = setup_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+    let response = server.get("/api/cassettes").await;
+    assert_eq!(response.status_code(), 500);
+}
+
+#[tokio::test]
+async fn test_get_tyre() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+    let response = server.get("/api/tyres").await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+    // Check that the response is an array and has the expected fake data
+    assert!(json.is_array());
+    assert_eq!(json[0]["id"], 1);
+    assert_eq!(json[0]["name"], "TestTyre");
+    assert_eq!(json[0]["circumference"], 2100);
+    assert_eq!(json[1]["id"], 2);
+    assert_eq!(json[1]["name"], "AnotherTyre");
+    assert_eq!(json[1]["circumference"], 2150);
+
+    // Check when db doesn't contain data
+    let db = setup_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+    let response = server.get("/api/tyres").await;
+    assert_eq!(response.status_code(), 500);
+}
+
+#[tokio::test]
+async fn test_calculate_ratio() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let crankset_id = 2;
+    let cassette_id = 2;
+
+    let crankset = cranksets::Entity::get_by_id(&db, crankset_id).await.expect("Query Failed").expect("Crankset not found");
+    let cassette = cassettes::Entity::get_by_id(&db, cassette_id).await.expect("Query Failed").expect("Cassette not found");
+
+    let crankset_rings_vec = match crankset.rings_vec() {
+        Ok(v) => v,
+        Err(_) => panic!("Invalid Crankset"),
+    };
+    let cassette_sprockets_vec = match cassette.sprockets_vec() {
+        Ok(v) => v,
+        Err(_) => panic!("Invalid Cassette")
+    };
+
+    let url = format!("/api/calculate/ratio?crankset_id={}&cassette_id={}", crankset_id, cassette_id);
+    
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    let response = server.get(&url).await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+
+    let expected = calculate_ratios(&crankset_rings_vec, &cassette_sprockets_vec);
+
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    assert_eq!(api_result, expected);
+
+    let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
+    assert_eq!(api_chainrings, crankset_rings_vec);
+    let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
+    assert_eq!(api_sprockets, cassette_sprockets_vec);
+}
+
+#[tokio::test]
+async fn test_calculate_manual_ratio() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+
+    let crankset = vec![52, 36];
+    let cassette = vec![11, 12, 13];
+
+    let manual_chainring = crankset.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+    let manual_cassette = cassette.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+
+    let url = format!("/api/calculate/ratio?manual_chainring={}&manual_cassette={}", encode(&manual_chainring), encode(&manual_cassette));
+
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    let response = server.get(&url).await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+
+    let expected = calculate_ratios(&crankset, &cassette);
+
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    assert_eq!(api_result, expected);
+
+    let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
+    assert_eq!(api_chainrings, crankset);
+    let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
+    assert_eq!(api_sprockets, cassette);
+}
+
+#[tokio::test]
+async fn test_calculate_rollout() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let crankset_id = 2;
+    let cassette_id = 2;
+    let tyre_id = 1;
+
+    let crankset = cranksets::Entity::get_by_id(&db, crankset_id).await.expect("Query Failed").expect("Crankset not found");
+    let cassette = cassettes::Entity::get_by_id(&db, cassette_id).await.expect("Query Failed").expect("Cassette not found");
+    let tyre = tyres::Entity::get_by_id(&db, tyre_id).await.expect("Query Failed").expect("Tyre not found");
+
+    let crankset_rings_vec = match crankset.rings_vec() {
+        Ok(v) => v,
+        Err(_) => panic!("Invalid Crankset"),
+    };
+    let cassette_sprockets_vec = match cassette.sprockets_vec() {
+        Ok(v) => v,
+        Err(_) => panic!("Invalid Cassette")
+    };
+    let tyre_circumference: u16 = tyre.circumference as u16;
+
+    let url = format!("/api/calculate/rollout?crankset_id={}&cassette_id={}&tyre_id={}", crankset_id, cassette_id, tyre_id);
+    
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    let response = server.get(&url).await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+
+    let expected = calculate_rollout(&crankset_rings_vec, &cassette_sprockets_vec, &tyre_circumference);
+
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    assert_eq!(api_result, expected);
+
+    let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
+    assert_eq!(api_chainrings, crankset_rings_vec);
+    let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
+    assert_eq!(api_sprockets, cassette_sprockets_vec);
+    assert_eq!(tyre_circumference, json["tyre_circumference"]);
+}
+
+#[tokio::test]
+async fn test_calculate_manual_rollout() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+
+    let crankset = vec![52, 36];
+    let cassette = vec![11, 12, 13];
+    let tyre_id = 1;
+    let tyre = tyres::Entity::get_by_id(&db, tyre_id).await.expect("Query Failed").expect("Tyre not found");
+    
+    let manual_chainring = crankset.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+    let manual_cassette = cassette.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+    let tyre_circumference: u16 = tyre.circumference as u16;
+
+    let url = format!("/api/calculate/rollout?manual_chainring={}&manual_cassette={}&tyre_id={}", encode(&manual_chainring), encode(&manual_cassette), tyre_id);
+
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    let response = server.get(&url).await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+
+    let expected = calculate_rollout(&crankset, &cassette, &tyre_circumference);
+
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+    assert_eq!(api_result, expected);
+
+    let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
+    assert_eq!(api_chainrings, crankset);
+    let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
+    assert_eq!(api_sprockets, cassette);
+    assert_eq!(tyre_circumference, json["tyre_circumference"]);
+}
+
+#[tokio::test]
+async fn test_calculate_speed() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let crankset_id = 2;
+    let cassette_id = 2;
+    let tyre_id = 1;
+    let min_cadence: u16 = 50;
+    let max_cadence: u16 = 100;
+    let cadence_increment: u16 = 10;
+    let cadence_list: Vec<u16> = (min_cadence..=max_cadence)
+        .step_by(cadence_increment as usize)
+        .collect();
+
+    let crankset = cranksets::Entity::get_by_id(&db, crankset_id).await.expect("Query Failed").expect("Crankset not found");
+    let cassette = cassettes::Entity::get_by_id(&db, cassette_id).await.expect("Query Failed").expect("Cassette not found");
+    let tyre = tyres::Entity::get_by_id(&db, tyre_id).await.expect("Query Failed").expect("Tyre not found");
+
+    let crankset_rings_vec = match crankset.rings_vec() {
+        Ok(v) => v,
+        Err(_) => panic!("Invalid Crankset"),
+    };
+    let cassette_sprockets_vec = match cassette.sprockets_vec() {
+        Ok(v) => v,
+        Err(_) => panic!("Invalid Cassette")
+    };
+    let tyre_circumference: u16 = tyre.circumference as u16;
+
+    let url = format!("/api/calculate/speed?crankset_id={}&cassette_id={}&tyre_id={}&min_cadence={}&max_cadence={}&cadence_increment={}", crankset_id, cassette_id, tyre_id, min_cadence, max_cadence, cadence_increment);
+    
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    let response = server.get(&url).await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+
+    let expected: Vec<Vec<f64>> = calculate_speed(&crankset_rings_vec, &cassette_sprockets_vec, &tyre_circumference, &cadence_list);
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+
+    for (api_row, expected_row) in api_result.iter().zip(expected.iter()) {
+        for (api_val, expected_val) in api_row.iter().zip(expected_row.iter()) {
+            assert_relative_eq!(api_val, expected_val, epsilon = 1e-10);
+        }
+    }
+
+    let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
+    assert_eq!(api_chainrings, crankset_rings_vec);
+    let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
+    assert_eq!(api_sprockets, cassette_sprockets_vec);
+    assert_eq!(json["tyre_circumference"], tyre_circumference);
+    let api_cadence_list: Vec<u16> = serde_json::from_value(json["cadences"].clone()).expect("Invalid result format");
+    assert_eq!(api_cadence_list, cadence_list);
+}
+
+#[tokio::test]
+async fn test_calculate_manual_speed() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+
+    let crankset = vec![52, 36];
+    let cassette = vec![11, 12, 13];
+    let tyre_id = 1;
+    let tyre = tyres::Entity::get_by_id(&db, tyre_id).await.expect("Query Failed").expect("Tyre not found");
+    let min_cadence: u16 = 50;
+    let max_cadence: u16 = 100;
+    let cadence_increment: u16 = 10;
+    let cadence_list: Vec<u16> = (min_cadence..=max_cadence)
+        .step_by(cadence_increment as usize)
+        .collect();
+    
+    let manual_chainring = crankset.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+    let manual_cassette = cassette.iter().map(|v| v.to_string()).collect::<Vec<_>>().join(", ");
+    let tyre_circumference: u16 = tyre.circumference as u16;
+
+    let url = format!("/api/calculate/speed?manual_chainring={}&manual_cassette={}&tyre_id={}&min_cadence={}&max_cadence={}&cadence_increment={}", encode(&manual_chainring), encode(&manual_cassette), tyre_id,min_cadence, max_cadence, cadence_increment);
+
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    let response = server.get(&url).await;
+    assert_eq!(response.status_code(), 200);
+    let body = response.text();
+    let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+
+    let expected: Vec<Vec<f64>> = calculate_speed(&crankset, &cassette, &tyre_circumference, &cadence_list);
+    let api_result: Vec<Vec<f64>> = serde_json::from_value(json["results"].clone()).expect("Invalid result format");
+
+    for (api_row, expected_row) in api_result.iter().zip(expected.iter()) {
+        for (api_val, expected_val) in api_row.iter().zip(expected_row.iter()) {
+            assert_relative_eq!(api_val, expected_val, epsilon = 1e-10);
+        }
+    }
+
+    let api_chainrings: Vec<u16> = serde_json::from_value(json["chainrings"].clone()).expect("Invalid result format");
+    assert_eq!(api_chainrings, crankset);
+    let api_sprockets: Vec<u16> = serde_json::from_value(json["sprockets"].clone()).expect("Invalid result format");
+    assert_eq!(api_sprockets, cassette);
+    assert_eq!(json["tyre_circumference"], tyre_circumference);
+    let api_cadence_list: Vec<u16> = serde_json::from_value(json["cadences"].clone()).expect("Invalid result format");
+    assert_eq!(api_cadence_list, cadence_list);
+}
+
+#[tokio::test]
+async fn test_invalid_requests() {    
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    for url_part in ["ratio", "rollout", "speed"] {
+        for params in [
+            "",
+            "cassette_id=1&tyre_id=1",
+            "crankset_id=1&tyre_id=1",
+            "crankset_id=1&cassette_id=1"
+        ] {
+            let url = format!("/api/calculate/{}?{}", url_part, params);
+            let response: axum_test::TestResponse = server.get(&url).await;
+            if url_part != "ratio" && params != "cassette_id=1&cassette_id=1" {
+                assert_eq!(response.status_code(), 400);
+                let body = response.text();
+                let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+                assert!(json["error"].is_string());
+            }
+        }
+    }
+}
+
+#[tokio::test]
+async fn test_invalid_id_requests() {
+    let working_id = 1;
+    let broken_id = 99;
+    
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+    for url_part in ["ratio", "rollout", "speed"] {
+        for params in [[broken_id, working_id, working_id], [working_id, broken_id, working_id], [working_id, working_id, broken_id], [broken_id, broken_id, broken_id]] {
+            let url = format!("/api/calculate/{}?crankset_id={}&cassette_id={}&tyre_id={}&min_cadence=50&max_cadence=100&cadence_increment=25", url_part, params[0], params[1], params[2]);
+            let response: axum_test::TestResponse = server.get(&url).await;
+            if url_part != "ratio" && params != [0, 0, 1] {
+                assert_eq!(response.status_code(), 404);
+                let body = response.text();
+                let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+                let expected = if params[0] == broken_id {
+                    "Crankset not found"
+                } else if params[1] == broken_id {
+                    "Cassette not found"
+                } else {
+                    "Tyre not found"
+                };
+                assert_eq!(json["error"].as_str().expect("No error string"), expected);
+            }
+        }
+    }
+}
+
+#[tokio::test]
+async fn test_invalid_manual_requests() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+
+    for params in [["1a,12", "11,12"], ["11,12", "1a,12"]] {
+        let url = format!("/api/calculate/ratio?manual_chainring={}&manual_cassette={}", encode(params[0]), encode(params[1]));
+        let response: axum_test::TestResponse = server.get(&url).await;
+        assert_eq!(response.status_code(), 400);
+        let body = response.text();
+        let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+        let expected = if params[0] == "1a,12" {
+            "Invalid Manual Crankset"
+        } else {
+            "Invalid Manual Cassette"
+        };
+        assert_eq!(json["error"].as_str().expect("No error string"), expected);
+    }
+}
+
+#[tokio::test]
+async fn test_invalid_cadences() {
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+
+    for params in [["5a", "100", "10"], ["50", "10a", "10"], ["50", "100", "1a"], ["100", "50", "10"], ["50", "100", "0"]] {
+        let url = format!("/api/calculate/speed?crankset_id=1&cassette_id=1&tyre_id=1&min_cadence={}&max_cadence={}&cadence_increment={}", params[0], params[1], params[2]);
+        let response: axum_test::TestResponse = server.get(&url).await;
+        assert_eq!(response.status_code(), 400);
+        let body = response.text();
+        let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+        assert!(json["error"].is_string());
+    }
+}
+
+#[tokio::test]
+async fn test_cadence_defaults() {
+    let expected_cadence_list = vec![60, 70, 80, 90, 100, 110, 120];
+
+    let db = complete_fake_db().await.expect("Failed to create fake db");
+    let state = AppState { db };
+    let app = build_app(state, None);
+    let server = TestServer::new(app);
+
+
+    for params in [["60", "120", ""], ["60", "", "10"], ["", "120", "10"], ["", "", ""]] {
+        let url = format!("/api/calculate/speed?crankset_id=1&cassette_id=1&tyre_id=1&min_cadence={}&max_cadence={}&cadence_increment={}", params[0], params[1], params[2]);
+        let response: axum_test::TestResponse = server.get(&url).await;
+        assert_eq!(response.status_code(), 200);
+        let body = response.text();
+        let json: serde_json::Value = serde_json::from_str(&body).expect("Invalid JSON");
+        let api_cadence_list: Vec<u16> = serde_json::from_value(json["cadences"].clone()).expect("Invalid result format");
+        assert_eq!(api_cadence_list, expected_cadence_list);
+    }
+}
+
+#[tokio::test]
+async fn test_database_errors() {
+    let no_crankset_db = setup_fake_db().await.expect("Failed to create fake db");
+    setup_cassettes_table(no_crankset_db.as_ref()).await;
+    setup_tyres_table(no_crankset_db.as_ref()).await;
+
+    let no_cassette_db = setup_fake_db().await.expect("Failed to create fake db");
+    setup_cranksets_table(no_cassette_db.as_ref()).await;
+    setup_tyres_table(no_cassette_db.as_ref()).await;
+
+    let no_tyre_db = setup_fake_db().await.expect("Failed to create fake db");
+    setup_cranksets_table(no_tyre_db.as_ref()).await;
+    setup_cassettes_table(no_tyre_db.as_ref()).await;
+
+    for db in [no_crankset_db, no_cassette_db, no_tyre_db] {
+        let state = AppState { db };
+        let app = build_app(state, None);
+        let server = TestServer::new(app);
+
+        let url = format!("/api/calculate/rollout?crankset_id=1&cassette_id=1&tyre_id=1");
+        let response: axum_test::TestResponse = server.get(&url).await;
+        assert_eq!(response.status_code(), 500);
+    }
+}
