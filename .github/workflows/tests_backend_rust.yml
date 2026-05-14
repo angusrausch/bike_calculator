@@ -33,7 +33,7 @@ jobs:
           - name: linux-x86_64
             runner: ubuntu-latest
           - name: linux-arm64
-            runner: ubuntu-24.04-arm64
+            runner: ubuntu-24.04-arm
 
     container: rust:1-alpine3.22
     defaults:
