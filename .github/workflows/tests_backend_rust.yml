@@ -3,7 +3,6 @@ name: Backend_Rust
 on:
   push:
   pull_request:
-    branches: [ main ]
 
 jobs:
   test_rust:
@@ -14,9 +13,13 @@ jobs:
         working-directory: ./back_end_rust
     steps:
     - uses: actions/checkout@v6
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+    - name: Install tarpaulin
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-tarpaulin
     - name: Run Tests
-      run: |
-        docker run --security-opt seccomp=unconfined -v $(pwd):/app --workdir /app xd009642/tarpaulin cargo tarpaulin --out Html
+      run: cargo tarpaulin --out Html
     - name: Upload code coverage results
       uses: actions/upload-artifact@v7
       with:
@@ -25,17 +28,27 @@ jobs:
         retention-days: 7
 
   build_linux:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: test_rust
     runs-on: ${{ matrix.runner }}
     strategy:
       matrix:
         include:
-          - name: linux-x86_64
+          - name: linux-x86_64-gnu
             runner: ubuntu-latest
-          - name: linux-arm64
-            runner: ubuntu-24.04-arm64
+            container: rust:1.95-trixie
+          - name: linux-arm64-gnu
+            runner: ubuntu-24.04-arm
+            container: rust:1.95-trixie
+          - name: linux-x86_64-musl
+            runner: ubuntu-latest
+            container: rust:1.95-alpine3.22
+          # No Arm musl due to actions not having an upload artifact for Arm Alpine
+          # - name: linux-arm64-musl
+          #   runner: ubuntu-24.04-arm64
+          #   container: rust:1.95-alpine3.22
 
-    container: rust:1-alpine3.22
+    container: ${{ matrix.container }}
     defaults:
       run:
         working-directory: ./back_end_rust
@@ -52,4 +65,3 @@ jobs:
           path: back_end_rust/target/release/bike_calculator_backend
           retention-days: 28
           overwrite: true
-
