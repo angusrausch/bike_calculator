@@ -3,7 +3,6 @@ name: Backend_Rust
 on:
   push:
   pull_request:
-    branches: [ main ]
 
 jobs:
   test_rust:
@@ -29,6 +28,7 @@ jobs:
         retention-days: 7
 
   build_linux:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: test_rust
     runs-on: ${{ matrix.runner }}
     strategy:
