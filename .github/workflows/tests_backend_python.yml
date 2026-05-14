@@ -8,16 +8,26 @@ on:
 jobs:
   test_python:
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: ./back_end_python
     steps:
     - uses: actions/checkout@v6
+    - name: Set up Python
+      uses: actions/setup-python@v6
+      with:
+        python-version: '3.14'
+        cache: 'pip'
+    - name: Install Pip Packages
+      run: |
+        pip3 install -r requirements.txt
+        pip3 install -e .
+    - name: Setup Fake Environment
+      run: mv .env.example .env
     - name: Run Tests
       run: |
-        mv .env.example .env
-        docker run -v $(pwd)/:/app --workdir /app python:3.14-trixie sh -c "pip3 install -r requirments.txt && pip3 install -e . && coverage run -m pytest && coverage html"
+        coverage run -m pytest
+        coverage html
     - name: Upload code coverage results
       uses: actions/upload-artifact@v7
       with:

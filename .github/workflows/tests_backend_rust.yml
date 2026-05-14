@@ -14,9 +14,13 @@ jobs:
         working-directory: ./back_end_rust
     steps:
     - uses: actions/checkout@v6
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+    - name: Install tarpaulin
+      uses: taiki-e/install-action@v2
+      with:
+        tool: cargo-tarpaulin
     - name: Run Tests
-      run: |
-        docker run --security-opt seccomp=unconfined -v $(pwd):/app --workdir /app xd009642/tarpaulin cargo tarpaulin --out Html
+      run: cargo tarpaulin --out Html
     - name: Upload code coverage results
       uses: actions/upload-artifact@v7
       with:
@@ -35,16 +39,15 @@ jobs:
           - name: linux-arm64
             runner: ubuntu-24.04-arm
 
-    container: rust:1-alpine3.22
     defaults:
       run:
         working-directory: ./back_end_rust
 
     steps:
       - uses: actions/checkout@v6
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Build Release
         run: cargo build --release
-      
       - name: Upload Release Artifact
         uses: actions/upload-artifact@v7
         with:
