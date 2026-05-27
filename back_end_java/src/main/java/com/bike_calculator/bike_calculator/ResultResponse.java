@@ -7,6 +7,7 @@ public class ResultResponse {
     private List<Integer> chainrings;
     private List<Integer> sprockets;
     private List<Integer> cadences;
+    private Integer tyreCircumference;
 
     public ResultResponse(List<List<Double>> result, List<Integer> chainrings, List<Integer> sprockets) {
         this.result = result;
@@ -14,10 +15,18 @@ public class ResultResponse {
         this.sprockets = sprockets;
     }
 
-    public ResultResponse(List<List<Double>> result, List<Integer> chainrings, List<Integer> sprockets, List<Integer> cadences) {
+        public ResultResponse(List<List<Double>> result, List<Integer> chainrings, List<Integer> sprockets, Integer tyreCircumference) {
         this.result = result;
         this.chainrings = chainrings;
         this.sprockets = sprockets;
+        this.tyreCircumference = tyreCircumference;
+    }
+
+    public ResultResponse(List<List<Double>> result, List<Integer> chainrings, List<Integer> sprockets, Integer tyreCircumference, List<Integer> cadences) {
+        this.result = result;
+        this.chainrings = chainrings;
+        this.sprockets = sprockets;
+        this.tyreCircumference = tyreCircumference;
         this.cadences = cadences;
     }
 
@@ -32,6 +41,10 @@ public class ResultResponse {
     public List<Integer> getSprockets() {
         return sprockets;
     }
+    
+        public Integer getTyre_circumference() {
+            return tyreCircumference;
+        }
 
     public List<Integer> getCadences() {
         return cadences;

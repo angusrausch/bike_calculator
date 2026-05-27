@@ -1,7 +1,7 @@
 package com.bike_calculator.bike_calculator;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,9 +13,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.util.UriComponentsBuilder;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -33,10 +35,14 @@ class CalculatorControllerTest {
     @Autowired
     private TyreRepo tyreRepo;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    @Autowired(required = false)
+    private TestRestTemplate restTemplate;
 
     @BeforeEach
     void setUp() {
+        if (restTemplate == null) {
+            restTemplate = new TestRestTemplate();
+        }
         for (int i = 1; i <= 5; i++) {
             cassetteRepo.save(new Cassette("Cassette " + i, Arrays.asList(11 + i, 12 + i, 13 + i)));
             cranksetRepo.save(new Crankset("Crankset " + i, Arrays.asList(34 + i, 50 + i)));
@@ -48,7 +54,9 @@ class CalculatorControllerTest {
     void testGetCassettes() {
         String url = "http://localhost:" + port + "/api/cassettes";
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> response = restTemplate.getForObject(url, List.class);
+        ResponseEntity<List> responseEntity = restTemplate.getForEntity(url, List.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        List<Map<String, Object>> response = responseEntity.getBody();
         assertNotNull(response);
         assertTrue(response.size() >= 5);
         assertEquals(cassetteRepo.findById(1L).get().getName(), response.get(0).get("name"));
@@ -59,7 +67,9 @@ class CalculatorControllerTest {
     void testGetCassette() {
         String url = "http://localhost:" + port + "/api/cassettes/" + 1;
         @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
         assertEquals(cassetteRepo.findById(1L).get().getName(), (String) response.get("name"));
     }
@@ -68,7 +78,9 @@ class CalculatorControllerTest {
     void testGetCranksets() {
         String url = "http://localhost:" + port + "/api/cranksets";
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> response = restTemplate.getForObject(url, List.class);
+        ResponseEntity<List> responseEntity = restTemplate.getForEntity(url, List.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        List<Map<String, Object>> response = responseEntity.getBody();
         assertNotNull(response);
         assertTrue(response.size() >= 5);
         assertEquals(cranksetRepo.findById(1L).get().getName(), response.get(0).get("name"));
@@ -79,7 +91,9 @@ class CalculatorControllerTest {
     void testGetCrankset() {
         String url = "http://localhost:" + port + "/api/cranksets/" + 1;
         @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
         assertEquals(cranksetRepo.findById(1L).get().getName(), (String) response.get("name"));
     }
@@ -88,7 +102,9 @@ class CalculatorControllerTest {
     void testGetTyres() {
         String url = "http://localhost:" + port + "/api/tyres";
         @SuppressWarnings("unchecked")
-        List<Map<String, Object>> response = restTemplate.getForObject(url, List.class);
+        ResponseEntity<List> responseEntity = restTemplate.getForEntity(url, List.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        List<Map<String, Object>> response = responseEntity.getBody();
         assertNotNull(response);
         assertTrue(response.size() >= 5);
         assertEquals(tyreRepo.findById(1L).get().getName(), response.get(0).get("name"));
@@ -99,7 +115,9 @@ class CalculatorControllerTest {
     void testGetTyre() {
         String url = "http://localhost:" + port + "/api/tyres/" + 1;
         @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
         assertEquals(tyreRepo.findById(1L).get().getName(), (String) response.get("name"));
     }
@@ -115,7 +133,9 @@ class CalculatorControllerTest {
         String url = builder.toUriString();
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
         assertEquals(crankset.getRings(), response.get("chainrings"));
         assertEquals(cassette.getSprockets(), response.get("sprockets"));
@@ -138,7 +158,9 @@ class CalculatorControllerTest {
         String url = builder.toUriString();
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
         assertEquals(crankset.getRings(), response.get("chainrings"));
         assertEquals(cassette.getSprockets(), response.get("sprockets"));
@@ -167,7 +189,9 @@ class CalculatorControllerTest {
         String url = builder.toUriString();
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Map<String, Object> response = responseEntity.getBody();
         assertNotNull(response);
         assertEquals(crankset.getRings(), response.get("chainrings"));
         assertEquals(cassette.getSprockets(), response.get("sprockets"));
@@ -200,7 +224,10 @@ class CalculatorControllerTest {
         String url = builder.toUriString();
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> response = restTemplate.getForObject(url, Map.class);
+        ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        Map<String, Object> response = responseEntity.getBody();
+
         assertNotNull(response);
         assertEquals(crankset.getRings(), response.get("chainrings"));
         assertEquals(cassette.getSprockets(), response.get("sprockets"));
