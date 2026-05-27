@@ -272,7 +272,30 @@ class CalculatorControllerTest {
         String[][] params = {
             {"crankset_id=1&cassette_id=999&tyre_id=1", "Cassette not found"},
             {"crankset_id=999&cassette_id=1&tyre_id=1", "Crankset not found"},
-            {"crankset_id=1&cassette_id=1&tyre_id=999", "Tyre not found"},
+            {"crankset_id=1&cassette_id=1&tyre_id=999", "Tyre not found"}
+        };
+
+        for (String url_part : url_parts) {
+            for (String[] param : params) {
+                if (!"ratio".equals(url_part) || !"crankset_id=1&cassette_id=1&tyre_id=999".equals(param[0])) {
+
+                    String url = base_url + url_part + "?" + param[0];
+                    ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+
+                    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> response = responseEntity.getBody();
+                    assertEquals(param[1], response.get("error"));
+                }
+            }
+        }
+    }
+
+    @Test
+    void testGetCalculateInvalidIdsText() {
+        String base_url = "http://localhost:" + port + "/api/calculate/";
+        String[] url_parts = {"ratio", "rollout", "speed"};
+        String[][] params = {
             {"crankset_id=1&cassette_id=aaa&tyre_id=1", "Invalid Cassette ID"},
             {"crankset_id=aaa&cassette_id=1&tyre_id=1", "Invalid Crankset ID"},
             {"crankset_id=1&cassette_id=1&tyre_id=aaa", "Invalid Tyre ID"}
@@ -280,17 +303,13 @@ class CalculatorControllerTest {
 
         for (String url_part : url_parts) {
             for (String[] param : params) {
-                if (!"ratio".equals(url_part) && 
-                (!"crankset_id=1&cassette_id=1&tyre_id=999".equals(param[0]) || !"crankset_id=1&cassette_id=1&tyre_id=aaa".equals(param[0]))) {
+                if (!"ratio".equals(url_part) || !"crankset_id=1&cassette_id=1&tyre_id=aaa".equals(param[0])) {
 
                     String url = base_url + url_part + "?" + param[0];
                     ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
 
-                    if (param[1].contains("found")) {
-                        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
-                    } else {
-                        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-                    }
+                    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+
                     @SuppressWarnings("unchecked")
                     Map<String, Object> response = responseEntity.getBody();
                     assertEquals(param[1], response.get("error"));
