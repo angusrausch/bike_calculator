@@ -28,34 +28,52 @@ def create_calculator_blueprint():
         results = db.session.query(Tyre).all()
         return jsonify_db(results)
 
-    def find_cassette_sprockets(cassette_id, manual_cassette):
+    def find_cassette_sprockets(args):
+        cassette_id = args.get('cassette_id', '0')
+
         if cassette_id == "0":
             try:
+                manual_cassette = args.get('manual_cassette')
                 return [int(sprocket) for sprocket in manual_cassette.split(',')]
-            except ValueError:
+            except (ValueError, AttributeError):
                 raise ValueError("Invalid Manual Cassette")
         else:
-            cassette = db.session.get(Cassette, cassette_id)
+            try:
+                cassette = db.session.get(Cassette, int(cassette_id))
+            except ValueError:
+                raise ValueError("Invalid Cassette ID")
             if not cassette:
                 raise KeyError("Cassette not found")
             return cassette.sprockets
 
-    def find_chainrings(crankset_id, manual_chainring):
+    def find_chainrings(args):
+        crankset_id = args.get('crankset_id', '0')
+
         if crankset_id == "0":
             try:
+                manual_chainring = args.get('manual_chainring')
                 return[int(ring) for ring in manual_chainring.split(',')]
-            except ValueError:
+            except (ValueError, AttributeError):
                 raise ValueError("Invalid Manual Crankset")
         else:
-            crankset = db.session.get(Crankset, crankset_id)
+            try:
+                crankset = db.session.get(Crankset, int(crankset_id))
+            except ValueError:
+                raise ValueError("Invalid Crankset ID")
             if not crankset:
                 raise KeyError("Crankset not found")
             return crankset.rings
         
-    def find_tyres(tyre_id):
-        tyre = db.session.get(Tyre, tyre_id)
+    def find_tyres(args):
+        try:
+            tyre = db.session.get(Tyre, int(args.get('tyre_id')))
+        except ValueError:
+            raise ValueError("Invalid Tyre ID")
+        except TypeError:
+            raise ValueError("Tyre ID not provided")
         if not tyre:
             raise KeyError("Tyre not found")
+
         return tyre.circumference
 
     def create_cadence_list(args):
@@ -87,35 +105,11 @@ def create_calculator_blueprint():
 
         return cadence_list
 
-    def find_params(args, expected):
-        crankset_id = args.get('crankset_id', '0')
-        manual_chainring = args.get('manual_chainring', "")
-        chainrings = find_chainrings(crankset_id, manual_chainring)
-
-        cassette_id = args.get('cassette_id', '0')
-        manual_cassette = args.get('manual_cassette', "")
-        cassette_sprockets = find_cassette_sprockets(cassette_id, manual_cassette)
-
-        if expected == 1:
-            return chainrings, cassette_sprockets
-
-        try:
-            tyre_id = int(args.get('tyre_id'))
-        except TypeError:
-            raise ValueError("Tyre ID not provided")
-        tyre_circumference = find_tyres(tyre_id)
-
-        if expected == 2:        
-            return chainrings, cassette_sprockets, tyre_circumference
-        
-        cadence_list = create_cadence_list(args)
-
-        return chainrings, cassette_sprockets, tyre_circumference, cadence_list
-
     @bp.route("/api/calculate/ratio")
     def get_calculate_ratios():
         try:
-            chainrings, cassette_sprockets = find_params(request.args, 1)
+            chainrings = find_chainrings(request.args)
+            cassette_sprockets = find_cassette_sprockets(request.args)
         except ValueError as e:
             return jsonify({"error": e.args[0]}), 400
         except KeyError as e:
@@ -132,7 +126,9 @@ def create_calculator_blueprint():
     @bp.route("/api/calculate/rollout")
     def get_calculate_rollout():
         try:
-             chainrings, cassette_sprockets, tyre_circumference = find_params(request.args, 2)
+            chainrings = find_chainrings(request.args)
+            cassette_sprockets = find_cassette_sprockets(request.args)
+            tyre_circumference = find_tyres(request.args)
         except ValueError as e:
             return jsonify({"error": e.args[0]}), 400
         except KeyError as e:
@@ -148,7 +144,10 @@ def create_calculator_blueprint():
     @bp.route("/api/calculate/speed")
     def get_calculate_speed():
         try:
-            chainrings, cassette_sprockets, tyre_circumference, cadence_list = find_params(request.args, 3)
+            chainrings = find_chainrings(request.args)
+            cassette_sprockets = find_cassette_sprockets(request.args)
+            tyre_circumference = find_tyres(request.args)
+            cadence_list = create_cadence_list(request.args)
         except ValueError as e:
             return jsonify({"error": e.args[0]}), 400
         except KeyError as e:

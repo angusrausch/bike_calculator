@@ -216,6 +216,23 @@ def test_calculate_invalid_ids(client, fake_bike_data):
                 assert response.status_code == 404
                 assert response.get_json()["error"] == expected_error
 
+def test_calculate_invalid_ids_text(client, fake_bike_data):
+    url_parts = ["ratio", "rollout", "speed"]
+    params = [
+        ("crankset_id=1&cassette_id=aaa&tyre_id=1", "Invalid Cassette ID"),
+        ("crankset_id=aaa&cassette_id=1&tyre_id=1", "Invalid Crankset ID"),
+        ("crankset_id=1&cassette_id=1&tyre_id=aaa", "Invalid Tyre ID")
+    ]
+
+    for url_part in url_parts:
+        for param in params:
+            values = param[0]
+            expected_error = param[1]
+            if url_part != "ratio" or values != "crankset_id=1&cassette_id=1&tyre_id=aaa":
+                response = client.get("/api/calculate/" + url_part + "?" + values)
+                assert response.status_code == 400
+                assert response.get_json()["error"] == expected_error
+
 def test_invalid_requests(client, fake_bike_data):
     url_parts = ["ratio", "rollout", "speed"]
     params = [
@@ -274,7 +291,6 @@ def test_cadence_default(client, fake_bike_data):
 
     base_path = "/api/calculate/speed?tyre_id=1&crankset_id=1&cassette_id=1"
     for param in params:
-        print(base_path + "&min_cadence=" + param[0] + "&max_cadence=" + param[1] + "&cadence_increment=" + param[2])
         response = client.get(base_path + "&min_cadence=" + param[0] + "&max_cadence=" + param[1] + "&cadence_increment=" + param[2])
         assert response.status_code == 200
         assert response.get_json()["cadences"] == [value for value in range(60, 121, 10)]

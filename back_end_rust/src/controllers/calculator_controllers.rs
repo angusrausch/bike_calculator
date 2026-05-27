@@ -10,11 +10,11 @@ use serde_json::json;
 
 #[derive(Deserialize)]
 pub struct Params {
-    crankset_id: Option<u16>,
-    cassette_id: Option<u16>,
+    crankset_id: Option<String>,
+    cassette_id: Option<String>,
+    tyre_id: Option<String>,
     manual_chainring: Option<String>,
     manual_cassette: Option<String>,
-    tyre_id: Option<u16>,
     min_cadence: Option<String>,
     max_cadence: Option<String>,
     cadence_increment: Option<String>
@@ -56,52 +56,67 @@ fn parse_gear_string(input: &str) -> Result<Vec<u16>, String> {
 }
 
 async fn find_crankset_rings(db: &Arc<DatabaseConnection>, params: &Params,) -> Result<Vec<u16>, (StatusCode, String)> {
-    if let Some(id) = params.crankset_id.filter(|&id| id != 0) {
-        match Cranksets::get_by_id(db, id).await {
-            Ok(Some(m)) => match m.rings_vec() {
-                Ok(v) => Ok(v),
-                Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
-            },
-            Ok(None) => Err((StatusCode::NOT_FOUND, "Crankset not found".to_string())),
-            Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    match params.crankset_id.as_deref().unwrap_or("0").parse::<u16>() {
+        Ok(id) => {
+            if id != 0 {
+                match Cranksets::get_by_id(db, id).await {
+                    Ok(Some(m)) => match m.rings_vec() {
+                        Ok(v) => Ok(v),
+                        Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
+                    },
+                    Ok(None) => Err((StatusCode::NOT_FOUND, "Crankset not found".to_string())),
+                    Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+                }
+            } else {
+                let manual = params.manual_chainring.clone().unwrap_or_default();
+                match parse_gear_string(&manual) {
+                    Ok(v) => Ok(v),
+                    Err(_) => Err((StatusCode::BAD_REQUEST, format!("Invalid Manual Crankset"))),
+                }
+            }
         }
-    } else {
-        let manual = params.manual_chainring.clone().unwrap_or_default();
-        match parse_gear_string(&manual) {
-            Ok(v) => Ok(v),
-            Err(_) => Err((StatusCode::BAD_REQUEST, format!("Invalid Manual Crankset"))),
-        }
-    }
+        Err(_) => Err((StatusCode::BAD_REQUEST, format!("Invalid Crankset ID"))),
+    }        
 }
 
 async fn find_cassette_sprockets(db: &Arc<DatabaseConnection>, params: &Params,) -> Result<Vec<u16>, (StatusCode, String)> {
-    if let Some(id) = params.cassette_id.filter(|&id| id != 0) {
-        match Cassettes::get_by_id(db, id).await {
-            Ok(Some(m)) => match m.sprockets_vec() {
-                Ok(v) => Ok(v),
-                Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
-            },
-            Ok(None) => Err((StatusCode::NOT_FOUND, "Cassette not found".to_string())),
-            Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    match params.cassette_id.as_deref().unwrap_or("0").parse::<u16>() {
+        Ok(id) => {
+            if id != 0 {
+                match Cassettes::get_by_id(db, id).await {
+                    Ok(Some(m)) => match m.sprockets_vec() {
+                        Ok(v) => Ok(v),
+                        Err(e) => Err((StatusCode::BAD_REQUEST, e.to_string())),
+                    },
+                    Ok(None) => Err((StatusCode::NOT_FOUND, "Cassette not found".to_string())),
+                    Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+                }
+            } else {
+                let manual = params.manual_cassette.clone().unwrap_or_default();
+                match parse_gear_string(&manual) {
+                    Ok(v) => Ok(v),
+                    Err(_) => Err((StatusCode::BAD_REQUEST, format!("Invalid Manual Cassette"))),
+                }
+            }
         }
-    } else {
-        let manual = params.manual_cassette.clone().unwrap_or_default();
-        match parse_gear_string(&manual) {
-            Ok(v) => Ok(v),
-            Err(_) => Err((StatusCode::BAD_REQUEST, format!("Invalid Manual Cassette"))),
-        }
-    }
+        Err(_) => Err((StatusCode::BAD_REQUEST, format!("Invalid Cassette ID"))),
+    }     
 }
 
 async fn find_tyre_circumference(db: &Arc<DatabaseConnection>, params: &Params) -> Result<u16, (StatusCode, String)> {
-    if let Some(id) = params.tyre_id.filter(|&id| id != 0) {
-        match Tyres::get_by_id(db, id).await {
-            Ok(Some(m)) => Ok(m.circumference as u16),
-            Ok(None) => Err((StatusCode::NOT_FOUND, "Tyre not found".to_string())),
-            Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+    match params.tyre_id.as_deref().unwrap_or("0").parse::<u16>() {
+        Ok(id) => {
+            if id != 0 {
+                match Tyres::get_by_id(db, id).await {
+                    Ok(Some(m)) => Ok(m.circumference as u16),
+                    Ok(None) => Err((StatusCode::NOT_FOUND, "Tyre not found".to_string())),
+                    Err(e) => Err((StatusCode::INTERNAL_SERVER_ERROR, e.to_string())),
+                }
+            } else {
+                Err((StatusCode::BAD_REQUEST, "Tyre ID not provided".to_string()))
+            }
         }
-    } else {
-        Err((StatusCode::BAD_REQUEST, "Tyre ID not provided".to_string()))
+        Err(_) => Err((StatusCode::BAD_REQUEST, format!("Invalid Tyre ID"))),
     }
 }
 
