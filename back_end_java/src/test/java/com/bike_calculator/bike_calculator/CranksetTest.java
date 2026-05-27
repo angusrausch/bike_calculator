@@ -22,9 +22,9 @@ class CranksetTest {
         String name = "Test Crankset";
         Crankset crankset = new Crankset(name, rings);
 
-        assertEquals(crankset.getRings(), rings);
-        assertEquals(crankset.getSpeed(), rings.size());
-        assertEquals(crankset.getName(), name);
+        assertEquals(rings, crankset.getRings());
+        assertEquals(rings.size(), crankset.getSpeed());
+        assertEquals(name, crankset.getName());
     }
 
     @Test
@@ -45,6 +45,6 @@ class CranksetTest {
 
         assertNull(crankset.getName());
         assertNull(crankset.getRings());
-        assertEquals(crankset.getSpeed(), 0);
+        assertEquals(0, crankset.getSpeed());
     }
 }

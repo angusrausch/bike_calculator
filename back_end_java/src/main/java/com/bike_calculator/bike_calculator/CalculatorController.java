@@ -71,7 +71,14 @@ public class CalculatorController {
             ));
     }
 
-    private Cassette identifyCassette(Long id, String manualCassette) {
+    private Cassette identifyCassette(String idString, String manualCassette) {
+        Long id;
+        try {
+            id = Long.valueOf(idString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid Cassette ID");
+        }
+
         if (id != 0) {
             return findRequiredEntity(cassetteRepo, id, "Cassette");
         } else {
@@ -87,7 +94,14 @@ public class CalculatorController {
         }
     }
 
-    private Crankset identifyCrankset(Long id, String manualCrankset) {
+    private Crankset identifyCrankset(String idString, String manualCrankset) {
+        Long id;
+        try {
+            id = Long.valueOf(idString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid Crankset ID");
+        }
+
         if (id != 0) {
             return findRequiredEntity(cranksetRepo, id, "Crankset");
         } else {
@@ -103,17 +117,68 @@ public class CalculatorController {
         }
     }
 
+    private Tyre identifyTyre(String idString) {
+        if (idString == null || idString.isEmpty()) {
+            throw new IllegalArgumentException("Tyre ID not provided");
+        }
+
+        Long id;
+        try {
+            id = Long.valueOf(idString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid Tyre ID");
+        }
+
+        return findRequiredEntity(tyreRepo, id, "Tyre");
+    }
+
+    private List<Integer> identifyCadences(String min, String max, String increment) {
+        Integer minCadence, maxCadence, cadenceIncrement;
+        try {
+            minCadence = Integer.valueOf(min);
+        } catch (NumberFormatException e) {
+            throw new  IllegalArgumentException("Invalid minimum cadence");
+        }
+        try {
+            maxCadence = Integer.valueOf(max);
+        } catch (NumberFormatException e) {
+            throw new  IllegalArgumentException("Invalid maximum cadence");
+        }
+        try {
+            cadenceIncrement = Integer.valueOf(increment);
+        } catch (NumberFormatException e) {
+            throw new  IllegalArgumentException("Invalid cadence increment");
+        }
+
+        if (minCadence > maxCadence) {
+            throw new  IllegalArgumentException("min_cadence cannot be greater than max_cadence");
+        }
+        if (!(cadenceIncrement > 0)) {
+            throw new  IllegalArgumentException("cadence_increment must be greater than 0");
+        }
+
+        List<Integer> cadenceList = new ArrayList<>();
+        for (int i = minCadence; i <= maxCadence; i += cadenceIncrement) {
+            cadenceList.add(i);
+        }
+        if (cadenceList.isEmpty()) {
+            throw new  IllegalArgumentException("No cadence values produced with given parameters");
+        }
+
+        return cadenceList;
+    }
+
     @GetMapping("/api/calculate/ratio")
     public ResponseEntity<Object> calculateRatio(
-            @RequestParam(defaultValue = "0") Long cassette_id,
-            @RequestParam(defaultValue = "0") Long crankset_id,
+            @RequestParam(defaultValue = "0") String cassette_id,
+            @RequestParam(defaultValue = "0") String crankset_id,
             @RequestParam(defaultValue = "") String manual_cassette,
-            @RequestParam(defaultValue = "") String manual_chainring) {
+            @RequestParam(defaultValue = "") String manual_chainring,
+            @RequestParam(defaultValue = "") String tyre_id) {
 
         try {
             Cassette cassette = identifyCassette(cassette_id, manual_cassette);
             Crankset crankset = identifyCrankset(crankset_id, manual_chainring);
-
             Calculation calculation = new Calculation(cassette, crankset);
             List<List<Double>> result = calculation.getRatio();
 
@@ -129,21 +194,16 @@ public class CalculatorController {
 
     @GetMapping("/api/calculate/rollout")
     public ResponseEntity<Object> calculateRollout(
-            @RequestParam(defaultValue = "0") Long cassette_id,
-            @RequestParam(defaultValue = "0") Long crankset_id,
-            @RequestParam Long tyre_id,
+            @RequestParam(defaultValue = "0") String cassette_id,
+            @RequestParam(defaultValue = "0") String crankset_id,
+            @RequestParam(required = false) String tyre_id,
             @RequestParam(defaultValue = "") String manual_cassette,
             @RequestParam(defaultValue = "") String manual_chainring) {
 
         try {
             Cassette cassette = identifyCassette(cassette_id, manual_cassette);
             Crankset crankset = identifyCrankset(crankset_id, manual_chainring);
-
-            if (tyre_id == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Tyre ID not provided"));
-            }
-
-            Tyre tyre = findRequiredEntity(tyreRepo, tyre_id, "Tyre");
+            Tyre tyre = identifyTyre(tyre_id);
 
             Calculation calculation = new Calculation(cassette, crankset, tyre);
             List<List<Double>> result = calculation.getRollout();
@@ -160,46 +220,20 @@ public class CalculatorController {
 
     @GetMapping("/api/calculate/speed")
     public ResponseEntity<Object> calculateSpeed(
-            @RequestParam(defaultValue = "0") Long cassette_id,
-            @RequestParam(defaultValue = "0") Long crankset_id,
-            @RequestParam Long tyre_id,
-            @RequestParam(defaultValue = "60") int min_cadence,
-            @RequestParam(defaultValue = "120") int max_cadence,
-            @RequestParam(defaultValue = "10") int cadence_increment,
+            @RequestParam(defaultValue = "0") String cassette_id,
+            @RequestParam(defaultValue = "0") String crankset_id,
+            @RequestParam(required = false) String tyre_id,
+            @RequestParam(defaultValue = "60") String min_cadence,
+            @RequestParam(defaultValue = "120") String max_cadence,
+            @RequestParam(defaultValue = "10") String cadence_increment,
             @RequestParam(defaultValue = "") String manual_cassette,
             @RequestParam(defaultValue = "") String manual_chainring) {
 
         try {
             Cassette cassette = identifyCassette(cassette_id, manual_cassette);
             Crankset crankset = identifyCrankset(crankset_id, manual_chainring);
-
-            if (tyre_id == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Tyre ID not provided"));
-            }
-
-            Tyre tyre = findRequiredEntity(tyreRepo, tyre_id, "Tyre");
-
-            // cadence validation with the same messages as Python
-            try {
-                // min_cadence, max_cadence and cadence_increment are already ints; but need to validate values
-            } catch (NumberFormatException e) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Invalid cadence value"));
-            }
-
-            if (min_cadence > max_cadence) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "min_cadence cannot be greater than max_cadence"));
-            }
-            if (!(cadence_increment > 0)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "cadence_increment must be greater than 0"));
-            }
-
-            List<Integer> cadenceList = new ArrayList<>();
-            for (int i = min_cadence; i <= max_cadence; i += cadence_increment) {
-                cadenceList.add(i);
-            }
-            if (cadenceList.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "No cadence values produced with given parameters"));
-            }
+            Tyre tyre = identifyTyre(tyre_id);
+            List<Integer> cadenceList = identifyCadences(min_cadence, max_cadence, cadence_increment);
 
             Calculation calculation = new Calculation(cassette, crankset, tyre, cadenceList);
             List<List<Double>> result = calculation.getSpeed();

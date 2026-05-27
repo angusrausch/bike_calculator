@@ -236,4 +236,149 @@ class CalculatorControllerTest {
         List<List<Double>> result = calc.getRatio();
         assertEquals(result, response.get("results"));
     }
+
+    @Test
+    void testGetInvalidManualRequests() {
+        String base_url = "http://localhost:" + port + "/api/calculate/";
+        String[] url_parts = {"ratio", "rollout", "speed"};
+        String[][] params = {
+            {"1a,12", "11,12", "Invalid Manual Crankset"},
+            {"11,12", "1a,12", "Invalid Manual Cassette"},
+            {"", "11,12", "Invalid Manual Crankset"},
+            {"11,12", "", "Invalid Manual Cassette"},
+        };
+
+        for (String url_part : url_parts) {
+            for (String[] param : params) {
+                UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(base_url + url_part)
+                    .queryParam("manual_chainring", param[0])
+                    .queryParam("manual_cassette", param[1])
+                    .queryParam("tyre_id", "1");
+                String url = builder.toUriString();
+
+                ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+                assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+                @SuppressWarnings("unchecked")
+                Map<String, Object> response = responseEntity.getBody();
+                assertEquals(param[2], response.get("error"));
+            }
+        }
+    }
+
+    @Test
+    void testGetCalculateInvalidIds() {
+        String base_url = "http://localhost:" + port + "/api/calculate/";
+        String[] url_parts = {"ratio", "rollout", "speed"};
+        String[][] params = {
+            {"crankset_id=1&cassette_id=999&tyre_id=1", "Cassette not found"},
+            {"crankset_id=999&cassette_id=1&tyre_id=1", "Crankset not found"},
+            {"crankset_id=1&cassette_id=1&tyre_id=999", "Tyre not found"},
+            {"crankset_id=1&cassette_id=aaa&tyre_id=1", "Invalid Cassette ID"},
+            {"crankset_id=aaa&cassette_id=1&tyre_id=1", "Invalid Crankset ID"},
+            {"crankset_id=1&cassette_id=1&tyre_id=aaa", "Invalid Tyre ID"}
+        };
+
+        for (String url_part : url_parts) {
+            for (String[] param : params) {
+                if (!"ratio".equals(url_part) && 
+                (!"crankset_id=1&cassette_id=1&tyre_id=999".equals(param[0]) || !"crankset_id=1&cassette_id=1&tyre_id=aaa".equals(param[0]))) {
+
+                    String url = base_url + url_part + "?" + param[0];
+                    ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+
+                    if (param[1].contains("found")) {
+                        assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+                    } else {
+                        assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+                    }
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> response = responseEntity.getBody();
+                    assertEquals(param[1], response.get("error"));
+                }
+            }
+        }
+    }
+
+    @Test
+    void testGetInvalidRequests() {
+        String base_url = "http://localhost:" + port + "/api/calculate/";
+        String[] url_parts = {"ratio", "rollout", "speed"};
+        String[][] params = {
+            {"", "Invalid Manual Cassette"},
+            {"cassette_id=1&tyre_id=1", "Invalid Manual Crankset"},
+            {"crankset_id=1&tyre_id=1", "Invalid Manual Cassette"},
+            {"crankset_id=1&cassette_id=1", "Tyre ID not provided"}
+        };
+
+        for (String url_part : url_parts) {
+            for (String[] param : params) {
+                if (!"ratio".equals(url_part) && !"cassette_id=1&cassette_id=1".equals(param[0])) {
+                    String url = base_url + url_part + "?" + param[0];
+
+                    ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+
+                    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> response = responseEntity.getBody();
+                    assertEquals(param[1], response.get("error"));
+                }
+            }
+        }
+    }
+
+    @Test
+    void testGetInvalidCadences() {
+        String base_url = "http://localhost:" + port + "/api/calculate/speed?tyre_id=1&crankset_id=1&cassette_id=1";
+        String[][] params = {
+            {"6a","120","10", "Invalid minimum cadence"},
+            {"60","12a","10", "Invalid maximum cadence"}, 
+            {"60","120","1a", "Invalid cadence increment"},
+            {"120","60","10", "min_cadence cannot be greater than max_cadence"},
+            {"60","120","0", "cadence_increment must be greater than 0"},
+        };
+
+        for (String[] paramSet : params) {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(base_url)
+                    .queryParam("min_cadence", paramSet[0])
+                    .queryParam("max_cadence", paramSet[1])
+                    .queryParam("cadence_increment", paramSet[2]);
+            String url = builder.toUriString();
+
+            ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+
+            assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+            @SuppressWarnings("unchecked")
+            Map<String, Object> response = responseEntity.getBody();
+            assertEquals(paramSet[3], response.get("error"));
+        }
+    }
+
+    @Test
+    void testGetCadenceDefault() {
+        String base_url = "http://localhost:" + port + "/api/calculate/speed?tyre_id=1&crankset_id=1&cassette_id=1";
+        String[][] params = {
+            {"","120","10"},
+            {"60","","10"}, 
+            {"60","120",""},
+            {"", "", ""}
+        };
+
+        List<Integer> expectedCadenceList = new ArrayList<>();
+        for (int i = 60; i <= 120; i += 10) {
+            expectedCadenceList.add(i);
+        }
+
+        for (String[] paramSet : params) {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(base_url)
+                    .queryParam("min_cadence", paramSet[0])
+                    .queryParam("max_cadence", paramSet[1])
+                    .queryParam("cadence_increment", paramSet[2]);
+            String url = builder.toUriString();
+
+            ResponseEntity<Map> responseEntity = restTemplate.getForEntity(url, Map.class);
+            assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+            Map<String, Object> response = responseEntity.getBody();
+            assertEquals(expectedCadenceList, response.get("cadences"));
+        }
+    }
 }

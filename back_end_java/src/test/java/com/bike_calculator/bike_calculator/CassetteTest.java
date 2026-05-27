@@ -22,9 +22,9 @@ class CassetteTest {
         String name = "Test Cassette";
         Cassette cassette = new Cassette(name, sprockets);
 
-        assertEquals(cassette.getSprockets(), sprockets);
-        assertEquals(cassette.getSpeed(), sprockets.size());
-        assertEquals(cassette.getName(), name);
+        assertEquals(sprockets, cassette.getSprockets());
+        assertEquals(sprockets.size(), cassette.getSpeed());
+        assertEquals(name, cassette.getName());
     }
 
     @Test
@@ -45,6 +45,6 @@ class CassetteTest {
 
         assertNull(cassette.getName());
         assertNull(cassette.getSprockets());
-        assertEquals(cassette.getSpeed(), 0);
+        assertEquals(0, cassette.getSpeed());
     }
 }

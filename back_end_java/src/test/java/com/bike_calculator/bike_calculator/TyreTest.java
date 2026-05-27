@@ -19,8 +19,8 @@ class TyreTest {
         String name = "Test Tyre";
         Tyre tyre = new Tyre(name, circumference);
 
-        assertEquals(tyre.getCircumference(), circumference);
-        assertEquals(tyre.getName(), name);
+        assertEquals(circumference, tyre.getCircumference());
+        assertEquals(name, tyre.getName());
     }
 
     @Test
@@ -40,6 +40,6 @@ class TyreTest {
         Tyre tyre = new Tyre();
 
         assertNull(tyre.getName());
-        assertEquals(tyre.getCircumference(), 0);
+        assertEquals(0, tyre.getCircumference());
     }
 }
