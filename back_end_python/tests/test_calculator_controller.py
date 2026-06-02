@@ -156,7 +156,6 @@ def test_get_calculate_rollout_manual_input(client, fake_bike_data, app):
     assert response.status_code == 200
     data = response.get_json()
 
-
     assert Counter(data["chainrings"]) == Counter(expected_chainrings)
     assert Counter(data["sprockets"]) == Counter(expected_sprockets)
     
@@ -201,24 +200,97 @@ def test_calculate_incorrect_manual_values(client):
         assert response.get_json()["error"] == "Invalid Manual Crankset"
 
 def test_calculate_invalid_ids(client, fake_bike_data):
-    base_paths = ["/api/calculate/ratio", "/api/calculate/rollout", "/api/calculate/speed"]
+    url_parts = ["ratio", "rollout", "speed"]
+    params = [
+        ("crankset_id=1&cassette_id=999&tyre_id=1", "Cassette not found"),
+        ("crankset_id=999&cassette_id=1&tyre_id=1", "Crankset not found"),
+        ("crankset_id=1&cassette_id=1&tyre_id=999", "Tyre not found")
+    ]
 
-    for base_path in base_paths:
-        # Check we get invalid cassette id
-        broken_manual_cassette_path = base_path + "?crankset_id=1&cassette_id=999&tyre_id=1"
-        response = client.get(broken_manual_cassette_path)
-        assert response.status_code == 404
-        assert response.get_json()["error"] == "Cassette not found"
+    for url_part in url_parts:
+        for param in params:
+            values = param[0]
+            expected_error = param[1]
+            if url_part != "ratio" or values != "crankset_id=1&cassette_id=1&tyre_id=999":
+                response = client.get("/api/calculate/" + url_part + "?" + values)
+                assert response.status_code == 404
+                assert response.get_json()["error"] == expected_error
 
-        # Check we get invalid chainring id
-        broken_manual_crankset_path = base_path + "?crankset_id=999&cassette_id=1&tyre_id=1"
-        response = client.get(broken_manual_crankset_path)
-        assert response.status_code == 404
-        assert response.get_json()["error"] == "Crankset not found"
+def test_calculate_invalid_ids_text(client, fake_bike_data):
+    url_parts = ["ratio", "rollout", "speed"]
+    params = [
+        ("crankset_id=1&cassette_id=aaa&tyre_id=1", "Invalid Cassette ID"),
+        ("crankset_id=aaa&cassette_id=1&tyre_id=1", "Invalid Crankset ID"),
+        ("crankset_id=1&cassette_id=1&tyre_id=aaa", "Invalid Tyre ID")
+    ]
 
-        # Check we get invalid tyre id
-        if "ratio" not in base_path:
-            broken_manual_crankset_path = base_path +"?crankset_id=1&cassette_id=1&tyre_id=999"
-            response = client.get(broken_manual_crankset_path)
-            assert response.status_code == 404
-            assert response.get_json()["error"] == "Tyre not found"
+    for url_part in url_parts:
+        for param in params:
+            values = param[0]
+            expected_error = param[1]
+            if url_part != "ratio" or values != "crankset_id=1&cassette_id=1&tyre_id=aaa":
+                response = client.get("/api/calculate/" + url_part + "?" + values)
+                assert response.status_code == 400
+                assert response.get_json()["error"] == expected_error
+
+def test_invalid_requests(client, fake_bike_data):
+    url_parts = ["ratio", "rollout", "speed"]
+    params = [
+            "",
+            "cassette_id=1&tyre_id=1",
+            "crankset_id=1&tyre_id=1",
+            "crankset_id=1&cassette_id=1"
+        ]
+
+    for url_part in url_parts:
+        for param in params:
+            response = client.get("/api/calculate/" + url_part + "?" + param)
+            if url_part != "ratio" and params != "cassette_id=1&cassette_id=1":
+                assert response.status_code == 400
+
+def test_invalid_manual_requests(client, fake_bike_data):
+    url_parts = ["ratio", "rollout", "speed"]
+
+    params = [
+        (["1a,12", "11,12"], "Invalid Manual Crankset"),
+        (["11,12", "1a,12"], "Invalid Manual Cassette"),
+        (["", "11,12"], "Invalid Manual Crankset"),
+        (["11,12",""], "Invalid Manual Cassette")
+    ]
+
+    for url_part in url_parts:
+        for param in params:
+            response = client.get("/api/calculate/" + url_part + "?tyre_id=1&manual_chainring=" + param[0][0] + "&manual_cassette=" + param[0][1])
+            assert response.status_code == 400
+            assert response.get_json()["error"] == param[1]
+
+def test_invalid_cadences(client, fake_bike_data):
+    params = [
+        (["6a","120","10"], "Invalid minimum cadence"),
+        (["60","12a","10"], "Invalid maximum cadence"), 
+        (["60","120","1a"], "Invalid cadence increment"),
+        (["120","60","10"], "min_cadence cannot be greater than max_cadence"),
+        (["60","120","0"], "cadence_increment must be greater than 0"),
+    ]
+
+    base_path = "/api/calculate/speed?tyre_id=1&crankset_id=1&cassette_id=1"
+    for param in params:
+        values = param[0]
+        expected_error = param[1]
+        response = client.get(base_path + "&min_cadence=" + values[0] + "&max_cadence=" + values[1] + "&cadence_increment=" + values[2])
+        assert response.status_code == 400
+        assert response.get_json()["error"] == expected_error
+
+def test_cadence_default(client, fake_bike_data):
+    params = [
+        ["","120","10"],
+        ["60","","10"], 
+        ["60","120",""],
+        ["", "", ""]
+    ]
+
+    base_path = "/api/calculate/speed?tyre_id=1&crankset_id=1&cassette_id=1"
+    for param in params:
+        response = client.get(base_path + "&min_cadence=" + param[0] + "&max_cadence=" + param[1] + "&cadence_increment=" + param[2])
+        assert response.status_code == 200
+        assert response.get_json()["cadences"] == [value for value in range(60, 121, 10)]

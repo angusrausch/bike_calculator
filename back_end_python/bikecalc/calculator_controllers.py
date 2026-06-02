@@ -28,35 +28,94 @@ def create_calculator_blueprint():
         results = db.session.query(Tyre).all()
         return jsonify_db(results)
 
-    @bp.route("/api/calculate/ratio")
-    def get_calculate_ratios():
-        cassette_id = request.args.get('cassette_id', '0')
-        crankset_id = request.args.get('crankset_id', '0')
-        manual_cassette = request.args.get('manual_cassette', "")
-        manual_chainring = request.args.get('manual_chainring', "")
-        
+    def find_cassette_sprockets(args):
+        cassette_id = args.get('cassette_id', '0')
+
         if cassette_id == "0":
             try:
-                cassette_sprockets = [int(sprocket) for sprocket in manual_cassette.split(',')]
-            except ValueError:
-                return jsonify({"error": "Invalid Manual Cassette"}), 400
+                manual_cassette = args.get('manual_cassette')
+                return [int(sprocket) for sprocket in manual_cassette.split(',')]
+            except (ValueError, AttributeError):
+                raise ValueError("Invalid Manual Cassette")
         else:
-            cassette = db.session.get(Cassette, cassette_id)
+            try:
+                cassette = db.session.get(Cassette, int(cassette_id))
+            except ValueError:
+                raise ValueError("Invalid Cassette ID")
             if not cassette:
-                return jsonify({"error": "Cassette not found"}), 404
-            cassette_sprockets = cassette.sprockets
+                raise KeyError("Cassette not found")
+            return cassette.sprockets
+
+    def find_chainrings(args):
+        crankset_id = args.get('crankset_id', '0')
 
         if crankset_id == "0":
             try:
-                chainrings = [int(ring) for ring in manual_chainring.split(',')]
-            except ValueError:
-                return jsonify({"error": "Invalid Manual Crankset"}), 400
+                manual_chainring = args.get('manual_chainring')
+                return[int(ring) for ring in manual_chainring.split(',')]
+            except (ValueError, AttributeError):
+                raise ValueError("Invalid Manual Crankset")
         else:
-            crankset = db.session.get(Crankset, crankset_id)
+            try:
+                crankset = db.session.get(Crankset, int(crankset_id))
+            except ValueError:
+                raise ValueError("Invalid Crankset ID")
             if not crankset:
-                return jsonify({"error": "Crankset not found"}), 404
-            chainrings = crankset.rings
+                raise KeyError("Crankset not found")
+            return crankset.rings
         
+    def find_tyres(args):
+        try:
+            tyre = db.session.get(Tyre, int(args.get('tyre_id')))
+        except ValueError:
+            raise ValueError("Invalid Tyre ID")
+        except TypeError:
+            raise ValueError("Tyre ID not provided")
+        if not tyre:
+            raise KeyError("Tyre not found")
+
+        return tyre.circumference
+
+    def create_cadence_list(args):
+        try:
+            min_cadence = args.get('min_cadence', 60)
+            min_cadence = int(min_cadence) if min_cadence != "" else 60
+        except ValueError:
+            raise ValueError("Invalid minimum cadence")
+        try:
+            max_cadence = args.get('max_cadence', 120)
+            max_cadence = int(max_cadence) if max_cadence != "" else 120
+        except ValueError:
+            raise ValueError("Invalid maximum cadence")
+        try:
+            cadence_increment = args.get('cadence_increment', 10)
+            cadence_increment = int(cadence_increment) if cadence_increment != "" else 10
+        except ValueError:
+            raise ValueError("Invalid cadence increment")
+        if min_cadence > max_cadence:
+            raise ValueError("min_cadence cannot be greater than max_cadence")
+        if not cadence_increment > 0:
+            raise ValueError("cadence_increment must be greater than 0")
+        try:
+            cadence_list = [cadence for cadence in range(min_cadence, max_cadence + 1, cadence_increment)]
+        except ValueError:
+            raise ValueError("Could not create cadence list with provided values")
+        if len(cadence_list) == 0:
+            raise ValueError("No cadence values produced with given parameters")
+
+        return cadence_list
+
+    @bp.route("/api/calculate/ratio")
+    def get_calculate_ratios():
+        try:
+            chainrings = find_chainrings(request.args)
+            cassette_sprockets = find_cassette_sprockets(request.args)
+        except ValueError as e:
+            return jsonify({"error": e.args[0]}), 400
+        except KeyError as e:
+            return jsonify({"error": e.args[0]}), 404
+
+
         ratios = calculate_ratios(chainrings, cassette_sprockets)
         return jsonify({
             "chainrings": chainrings,
@@ -66,38 +125,14 @@ def create_calculator_blueprint():
 
     @bp.route("/api/calculate/rollout")
     def get_calculate_rollout():
-        cassette_id = request.args.get('cassette_id', '0')
-        crankset_id = request.args.get('crankset_id', '0')
-        tyre_id = request.args.get('tyre_id', '0')
-        manual_cassette = request.args.get('manual_cassette', "")
-        manual_chainring = request.args.get('manual_chainring', "")
-        
-        if cassette_id == "0":
-            try:
-                cassette_sprockets = [int(sprocket) for sprocket in manual_cassette.split(',')]
-            except ValueError:
-                return jsonify({"error": "Invalid Manual Cassette"}), 400
-        else:
-            cassette = db.session.get(Cassette, cassette_id)
-            if not cassette:
-                return jsonify({"error": "Cassette not found"}), 404
-            cassette_sprockets = cassette.sprockets
-
-        if crankset_id == "0":
-            try:
-                chainrings = [int(ring) for ring in manual_chainring.split(',')]
-            except ValueError:
-                return jsonify({"error": "Invalid Manual Crankset"}), 400
-        else:
-            crankset = db.session.get(Crankset, crankset_id)
-            if not crankset:
-                return jsonify({"error": "Crankset not found"}), 404
-            chainrings = crankset.rings
-
-        tyre = db.session.get(Tyre, tyre_id)
-        if not tyre:
-            return jsonify({"error": "Tyre not found"}), 404
-        tyre_circumference = tyre.circumference
+        try:
+            chainrings = find_chainrings(request.args)
+            cassette_sprockets = find_cassette_sprockets(request.args)
+            tyre_circumference = find_tyres(request.args)
+        except ValueError as e:
+            return jsonify({"error": e.args[0]}), 400
+        except KeyError as e:
+            return jsonify({"error": e.args[0]}), 404
         
         ratios = calculate_rollouts(chainrings, cassette_sprockets, tyre_circumference)
         return jsonify({
@@ -108,43 +143,15 @@ def create_calculator_blueprint():
 
     @bp.route("/api/calculate/speed")
     def get_calculate_speed():
-        cassette_id = request.args.get('cassette_id', '0')
-        crankset_id = request.args.get('crankset_id', '0')
-        tyre_id = request.args.get('tyre_id', '0')
-        min_cadence = int(request.args.get('min_cadence', 60))
-        max_cadence = int(request.args.get('max_cadence', 120))
-        cadence_increment = int(request.args.get('cadence_increment', 10))
-        manual_cassette = request.args.get('manual_cassette', "")
-        manual_chainring = request.args.get('manual_chainring', "")
-        
-        if cassette_id == "0":
-            try:
-                cassette_sprockets = [int(sprocket) for sprocket in manual_cassette.split(',')]
-            except ValueError:
-                return jsonify({"error": "Invalid Manual Cassette"}), 400
-        else:
-            cassette = db.session.get(Cassette, cassette_id)
-            if not cassette:
-                return jsonify({"error": "Cassette not found"}), 404
-            cassette_sprockets = cassette.sprockets
-
-        if crankset_id == "0":
-            try:
-                chainrings = [int(ring) for ring in manual_chainring.split(',')]
-            except ValueError:
-                return jsonify({"error": "Invalid Manual Crankset"}), 400
-        else:
-            crankset = db.session.get(Crankset, crankset_id)
-            if not crankset:
-                return jsonify({"error": "Crankset not found"}), 404
-            chainrings = crankset.rings
-
-        tyre = db.session.get(Tyre, tyre_id)
-        if not tyre:
-            return jsonify({"error": "Tyre not found"}), 404
-        tyre_circumference = tyre.circumference
-
-        cadence_list = [cadence for cadence in range(min_cadence, max_cadence + 1, cadence_increment)]
+        try:
+            chainrings = find_chainrings(request.args)
+            cassette_sprockets = find_cassette_sprockets(request.args)
+            tyre_circumference = find_tyres(request.args)
+            cadence_list = create_cadence_list(request.args)
+        except ValueError as e:
+            return jsonify({"error": e.args[0]}), 400
+        except KeyError as e:
+            return jsonify({"error": e.args[0]}), 404
 
         ratios = calculate_speeds(chainrings, cassette_sprockets, tyre_circumference, cadence_list)
         return jsonify({
