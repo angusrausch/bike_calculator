@@ -1,0 +1,80 @@
+process.env.NODE_ENV = 'test';
+const request = require('supertest');
+const app = require('../server');
+const { sequelize, Cassette, Crankset, Tyre } = require('../models/models');
+const { calculateRatios, calculateRollouts, calculateSpeeds } = require('../calculator');
+
+describe('Get API Endpoints Test', () => {
+    describe('GET /api/cassettes', () => {
+        it('should return a list of cassettes with a 200 status code', async () => {
+            const response = await request(app).get('/api/cassettes');
+            expect(response.statusCode).toBe(200);
+
+            const data = response.body;
+            expect(Array.isArray(data)).toBe(true);
+            expect(data[0] == data[1]).toBe(false);
+            
+            const firstElement = data[0];
+            expect(firstElement).toHaveProperty('name');
+            expect(firstElement).toHaveProperty('sprockets');
+            expect(Array.isArray(firstElement['sprockets'])).toBe(true);
+        });
+    });
+
+    describe('GET /api/cranksets', () => {
+        it('should return a list of cranksets with a 200 status code', async () => {
+            const response = await request(app).get('/api/cranksets');
+            expect(response.statusCode).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+
+            const data = response.body;
+            expect(Array.isArray(data)).toBe(true);
+            expect(data[0] == data[1]).toBe(false);
+            
+            const firstElement = data[0];
+            expect(firstElement).toHaveProperty('name');
+            expect(firstElement).toHaveProperty('rings');
+            expect(Array.isArray(firstElement['rings'])).toBe(true);
+        });
+    });
+
+    describe('GET /api/tyres', () => {
+        it('should return a list of tyres with a 200 status code', async () => {
+            const response = await request(app).get('/api/tyres');
+            expect(response.statusCode).toBe(200);
+            expect(Array.isArray(response.body)).toBe(true);
+
+            const data = response.body;
+            expect(Array.isArray(data)).toBe(true);
+            expect(data[0] == data[1]).toBe(false);
+            
+            const firstElement = data[0];
+            expect(firstElement).toHaveProperty('name');
+            expect(firstElement).toHaveProperty('circumference');
+        });
+    });
+
+})
+
+afterAll(async () => {
+    await Cassette.destroy({ where: {} });
+    await Crankset.destroy({ where: {} });
+    await Tyre.destroy({ where: {} });
+    await sequelize.close();
+});
+
+beforeAll(async () => {
+    await sequelize.sync();
+
+    await Cassette.create({ name: 'Test Cassette 1', sprockets: '11,12,13,14,15,16,17,19,21,24,27,30' });
+    await Cassette.create({ name: 'Test Cassette 2', sprockets: '12,14,16,18,21,24,28' });
+    await Cassette.create({ name: 'Test Cassette 3', sprockets: '10,12,14,17,19,21,23,25' });
+
+    await Crankset.create({ name: 'Test Crankset 1', rings: '52,36' });
+    await Crankset.create({ name: 'Test Crankset 2', rings: '50,34' });
+    await Crankset.create({ name: 'Test Crankset 3', rings: '53,39' });
+
+    await Tyre.create({ name: 'Test Tyre 1', circumference: 2128 });
+    await Tyre.create({ name: 'Test Tyre 2', circumference: 2100 });
+    await Tyre.create({ name: 'Test Tyre 3', circumference: 2000 });
+});

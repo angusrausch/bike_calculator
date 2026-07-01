@@ -43,7 +43,7 @@ function normalizeSprockets(value) {
 Cassette.init({
   id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
   name: { type: DataTypes.STRING(64), nullable: false },
-  speed: { type: DataTypes.INTEGER(), nullable: false},
+  // speed: { type: DataTypes.INTEGER(), nullable: false},
   sprockets: {
     type: DataTypes.TEXT,
     get() {
@@ -100,7 +100,7 @@ class Crankset extends Model {
 Crankset.init({
   id: { type: DataTypes.BIGINT, primaryKey: true, autoIncrement: true },
   name: { type: DataTypes.STRING(64), nullable: false },
-  speed: { type: DataTypes.INTEGER(), nullable: false},
+  // speed: { type: DataTypes.INTEGER(), nullable: false},
   rings: {
     type: DataTypes.TEXT,
     get() {

@@ -1,12 +1,14 @@
 const express = require('express');
 const app = express();
 
-const calculatorRoutes = require('./routes/calculator');
+const calculatorRoutes = require('./routes/calculatorRoutes');
 
 app.use('/', calculatorRoutes);
 
 const port = process.env.SERVER_PORT || 8080;
 
-app.listen(port, () => {
+if (require.main === module) {
+	app.listen(port, () => {});
+}
 
-})
+module.exports = app;

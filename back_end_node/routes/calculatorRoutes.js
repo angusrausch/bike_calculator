@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { Crankset, Cassette, Tyre } = require('../models/models');
+const { calculateRatios, calculateRollouts, calculateSpeeds } = require('../calculator');
 
 router.get('/api/cranksets', async (req, res) => {
     try {
