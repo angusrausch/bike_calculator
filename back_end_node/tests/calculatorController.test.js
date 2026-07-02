@@ -54,6 +54,30 @@ describe('Get API Endpoints Test', () => {
         });
     });
 
+    describe('get /api/calculate/ratios', () => {
+        const basePath = "/api/calculate/ratio";
+        const options = [
+            [1,1], [2,1], [2,2]
+        ];
+        it("tests a number of valid requests to check response", async () => {
+            for (option of options) {
+                const params = `crankset_id=${option[0]}&cassette_id=${option[1]}`;
+                const full_path = basePath + "?" + params;
+                const expectedChainrings = (await Crankset.findByPk(option[0])).rings;
+                const expectedCassette = (await Cassette.findByPk(option[1])).sprockets;
+
+                const response = await request(app).get(full_path);
+                expect(response.statusCode).toBe(200);
+                const data = response.body;
+
+                expect(data.chainrings).toEqual(expectedChainrings);
+                expect(data.sprockets).toEqual(expectedCassette);
+
+                const expectedRatios = calculateRatios(expectedChainrings, expectedCassette);
+                expect(data.results).toEqual(expectedRatios);
+            }
+        });
+    });
 })
 
 afterAll(async () => {
