@@ -37,70 +37,83 @@ router.get('/api/tyres', async (req, res) => {
     }
 });
 
-function normalizeSprockets (value) {
-    if (!value) return [];
-    if (Array.isArray(value)) return value.map(Number).filter(n => !Number.isNaN(n));
-    if (typeof value === 'number') return [value];
-    if (typeof value === 'string') {
-        try {
-        const parsed = JSON.parse(value);
-        if (Array.isArray(parsed)) return parsed.map(Number).filter(n => !Number.isNaN(n));
-        if (typeof parsed === 'number') return [parsed];
-        } catch (e) {
-        // not JSON, fallthrough to CSV
-        }
-        return value.split(',').map(s => Number(s.trim())).filter(n => !Number.isNaN(n));
+function normalizeSprockets(value) {
+    if (value === undefined || value === null || String(value).trim() === '') {
+        throw new TypeError();
     }
-    if (typeof value === 'object') {
-        return Object.values(value).map(Number).filter(n => !Number.isNaN(n));
-    }
-    return [];
+
+    const decoded = decodeURIComponent(String(value));
+    
+    return decoded.split(',').map(segment => {
+        const trimmed = segment.trim();
+        
+        if (trimmed === '') throw new TypeError();
+        
+        const num = Number(trimmed);
+        
+        if (Number.isNaN(num)) throw new TypeError();
+        
+        return num;
+    });
 }
 
 async function findCassetteSprockets (req) {
     const { cassette_id, manual_cassette } = req.query;
     if (cassette_id == null || cassette_id == 0) {
-        return normalizeSprockets(manual_cassette);
-    } else {
         try {
-            const data = await Cassette.findByPk(cassette_id);
-            return data.sprockets
+            return normalizeSprockets(manual_cassette);
         } catch (error) {
-            console.error("DATABASE ERROR:", error);
-            // res.status(500).json({ error: 'Cassette not found' });
+            throw new TypeError("Invalid Manual Cassette")
         }
+    } else if (Number.isInteger(Number(cassette_id))) {
+        const data = await Cassette.findByPk(cassette_id);
+        if (data == null) {
+            throw new ReferenceError("Cassette not found");
+        }
+        return data.sprockets;
+    } else {
+        throw new TypeError("Invalid Cassette ID");
     }
 }
 
 async function findChainrings (req) {
     const { crankset_id, manual_chainring } = req.query;
     if (crankset_id == null || crankset_id == 0) {
-        return normalizeSprockets(manual_chainring);
-    } else {
         try {
-            const data = await Crankset.findByPk(crankset_id);
-            return data.rings
+            return normalizeSprockets(manual_chainring);
         } catch (error) {
-            console.error("DATABASE ERROR:", error);
-            // res.status(500).json({ error: 'Cassette not found' });
+            throw new TypeError("Invalid Manual Crankset")
         }
+    } else if (Number.isInteger(Number(crankset_id))) {
+        const data = await Crankset.findByPk(crankset_id);
+        if (data == null) {
+            throw new ReferenceError("Crankset not found");
+        }
+        return data.rings
+    } else {
+        throw new TypeError("Invalid Crankset ID");
     }
 }
 
 router.get('/api/calculate/ratio', async (req, res) => {
     try {
-        const sprockets = await findCassetteSprockets(req);
         const rings = await findChainrings(req);
-        console.log(rings)
+        const sprockets = await findCassetteSprockets(req);
         const ratios = calculateRatios(rings, sprockets);
-        
+
         res.json({
             "chainrings": rings,
             "sprockets": sprockets,
             "results": ratios
         });
     } catch (error) {
-        console.error(error);
+        if (error instanceof ReferenceError) {
+            res.status(404).json({ error: error.message });
+        } else if (error instanceof TypeError) {
+            res.status(400).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: error.message });
+        }
     }
 
 })
