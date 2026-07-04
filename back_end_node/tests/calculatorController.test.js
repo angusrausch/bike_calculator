@@ -57,49 +57,114 @@ describe('Get API Endpoints Test', () => {
     describe('get /api/calculate/ratios', () => {
         const basePath = "/api/calculate/ratio";
 
-        it("tests a number of valid requests to check response", async () => {
-            const options = [
-                [1,1], [2,1], [2,2]
-            ];
-            for (option of options) {
-                const params = `crankset_id=${option[0]}&cassette_id=${option[1]}`;
-                const full_path = basePath + "?" + params;
-                const expectedChainrings = (await Crankset.findByPk(option[0])).rings;
-                const expectedCassette = (await Cassette.findByPk(option[1])).sprockets;
+        describe("Valid inputs", () => {
+            it("tests a number of valid requests to check response", async () => {
+                const options = [
+                    [1,1], [2,1], [2,2]
+                ];
+                for (option of options) {
+                    const params = `crankset_id=${option[0]}&cassette_id=${option[1]}`;
+                    const full_path = basePath + "?" + params;
+                    const expectedChainrings = (await Crankset.findByPk(option[0])).rings;
+                    const expectedCassette = (await Cassette.findByPk(option[1])).sprockets;
 
-                const response = await request(app).get(full_path);
-                expect(response.statusCode).toBe(200);
-                const data = response.body;
+                    const response = await request(app).get(full_path);
+                    expect(response.statusCode).toBe(200);
+                    const data = response.body;
 
-                expect(data.chainrings).toEqual(expectedChainrings);
-                expect(data.sprockets).toEqual(expectedCassette);
+                    expect(data.chainrings).toEqual(expectedChainrings);
+                    expect(data.sprockets).toEqual(expectedCassette);
 
-                const expectedRatios = calculateRatios(expectedChainrings, expectedCassette);
-                expect(data.results).toEqual(expectedRatios);
-            }
+                    const expectedRatios = calculateRatios(expectedChainrings, expectedCassette);
+                    expect(data.results).toEqual(expectedRatios);
+                }
+            });
+
+            it("tests a number of valid manual inputs to check response", async () => {
+                const paramsOptions = [
+                    [["52%2C36", "11%2C12%2C13"], [[52,36], [11,12,13]]],
+                    [["52,36", "11,12,13"], [[52,36], [11,12,13]]]
+                ];
+                for (option of paramsOptions) {
+                    const encodedParams = option[0];
+                    const expectedParams = option[1];
+                    const params = `manual_chainring=${encodedParams[0]}&manual_cassette=${encodedParams[1]}`;
+                    const full_path = basePath + "?" + params;
+
+                    const response = await request(app).get(full_path);
+                    expect(response.statusCode).toBe(200);
+                    const data = response.body;
+
+                    expect(data.chainrings).toEqual(expectedParams[0]);
+                    expect(data.sprockets).toEqual(expectedParams[1]);
+
+                    const expectedRatios = calculateRatios(expectedParams[0], expectedParams[1]);
+                    expect(data.results).toEqual(expectedRatios);
+                }
+            });
         });
 
-        it("tests a number of valid manual inputs to check response", async () => {
-            const paramsOptions = [
-                [["52%2C36", "11%2C12%2C13"], [[52,36], [11,12,13]]],
-                [["52,36", "11,12,13"], [[52,36], [11,12,13]]]
-            ];
-            for (option of paramsOptions) {
-                const encodedParams = option[0];
-                const expectedParams = option[1];
-                const params = `manual_chainring=${encodedParams[0]}&manual_cassette=${encodedParams[1]}`;
-                const full_path = basePath + "?" + params;
+        describe("invalid inputs", () => {
+            it("tests not found ids to check response", async () => {
+                const options = [
+                    [999, 1, "Crankset not found"],
+                    [1, 999, "Cassette not found"],
+                    [-1, 1, "Crankset not found"],
+                    [1, -1, "Cassette not found"],
+                ];
+                for (option of options) {
+                    const params = `crankset_id=${option[0]}&cassette_id=${option[1]}`;
+                    const full_path = basePath + "?" + params;
 
-                const response = await request(app).get(full_path);
-                expect(response.statusCode).toBe(200);
-                const data = response.body;
+                    const response = await request(app).get(full_path);
+                    expect(response.statusCode).toBe(404);
+                    const data = response.body;
 
-                expect(data.chainrings).toEqual(expectedParams[0]);
-                expect(data.sprockets).toEqual(expectedParams[1]);
+                    expect(data.error).toEqual(option[2]);
+                }
+            })
 
-                const expectedRatios = calculateRatios(expectedParams[0], expectedParams[1]);
-                expect(data.results).toEqual(expectedRatios);
-            }
+            it("tests invalid ids to check response", async () => {
+                const options = [
+                    ["a", 1, "Invalid Crankset ID"],
+                    [1, "a", "Invalid Cassette ID"],
+                    [null, 1, "Invalid Crankset ID"],
+                    [1, null, "Invalid Cassette ID"],
+                ];
+                for (option of options) {
+                    const params = `crankset_id=${option[0]}&cassette_id=${option[1]}`;
+                    const full_path = basePath + "?" + params;
+
+                    const response = await request(app).get(full_path);
+                    expect(response.statusCode).toBe(400);
+                    const data = response.body;
+
+                    expect(data.error).toEqual(option[2]);
+                }
+            })
+
+            it("tests invalid manual inputs to check response", async () => {
+                const options = [
+                    [["1a,12", "11,12"], "Invalid Manual Crankset"],
+                    [["11,12", "1a,12"], "Invalid Manual Cassette"],
+                    [["", "11,12"], "Invalid Manual Crankset"],
+                    [["11,12",""], "Invalid Manual Cassette"],
+                    [[",", "11,12"], "Invalid Manual Crankset"],
+                    [["11,12",","], "Invalid Manual Cassette"]
+                ];
+                for (option of options) {
+                    const encodedParams = option[0];
+                    const expectedParams = option[1];
+                    const params = `manual_chainring=${encodedParams[0]}&manual_cassette=${encodedParams[1]}`;
+                    const full_path = basePath + "?" + params;
+
+                    const response = await request(app).get(full_path);
+                    expect(response.statusCode).toBe(400);
+                    const data = response.body;
+
+                    expect(data.error).toEqual(option[1]);
+                }
+            })
         });
     });
 })
