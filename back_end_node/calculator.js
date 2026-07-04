@@ -15,7 +15,7 @@ function calculateRatios(crankset, cassette) {
     return gearRatios;
 }
 
-function calculateRollout(crankset, cassette, tyre) {
+function calculateRollouts(crankset, cassette, tyre) {
     ratios = calculateRatios(crankset, cassette);
     rollouts = [];
     for (chainring of ratios) {
@@ -30,7 +30,7 @@ function calculateRollout(crankset, cassette, tyre) {
 }
 
 function calculateSpeeds(crankset, cassette, tyre, cadences) {
-    rollouts = calculateRollout(crankset, cassette, tyre);
+    rollouts = calculateRollouts(crankset, cassette, tyre);
     speeds = [];
     for (rolloutGroup of rollouts) {
         for (rollout of rolloutGroup) {
@@ -45,4 +45,4 @@ function calculateSpeeds(crankset, cassette, tyre, cadences) {
     return speeds;
 }
 
-module.exports = { calculateRatios, calculateRollout, calculateSpeeds };
+module.exports = { calculateRatios, calculateRollouts, calculateSpeeds };

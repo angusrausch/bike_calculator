@@ -95,6 +95,21 @@ async function findChainrings (req) {
     }
 }
 
+async function findTyre (req) {
+    const { tyre_id } = req.query;
+    if (tyre_id == null) {
+        throw new TypeError("Tyre ID not provided")
+    } else if (Number.isInteger(Number(tyre_id))) {
+        const data = await Tyre.findByPk(tyre_id);
+        if (data == null) {
+            throw new ReferenceError("Tyre not found");
+        }
+        return data.circumference
+    } else {
+        throw new TypeError("Invalid Tyre ID");
+    }
+}
+
 router.get('/api/calculate/ratio', async (req, res) => {
     try {
         const rings = await findChainrings(req);
@@ -115,7 +130,30 @@ router.get('/api/calculate/ratio', async (req, res) => {
             res.status(500).json({ error: error.message });
         }
     }
+})
 
+router.get('/api/calculate/rollout', async (req, res) => {
+    try {
+        const rings = await findChainrings(req);
+        const sprockets = await findCassetteSprockets(req);
+        const circumference = await findTyre(req);
+        const rollout = calculateRollouts(rings, sprockets, circumference);
+
+        res.json({
+            "chainrings": rings,
+            "sprockets": sprockets,
+            "circumference": circumference,
+            "results": rollout
+        });
+    } catch (error) {
+        if (error instanceof ReferenceError) {
+            res.status(404).json({ error: error.message });
+        } else if (error instanceof TypeError) {
+            res.status(400).json({ error: error.message });
+        } else {
+            res.status(500).json({ error: error.message });
+        }
+    }
 })
 
 module.exports = router;

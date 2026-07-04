@@ -1,4 +1,4 @@
-const { calculateRatios, calculateRollout, calculateSpeeds } = require('../calculator');
+const { calculateRatios, calculateRollouts, calculateSpeeds } = require('../calculator');
 
 describe('Test Calculations', () => {
     chainringSize = [52,36]
@@ -63,13 +63,13 @@ describe('Test Calculations', () => {
 
     describe('Rollouts', () => {
         it('should be the expected size of the crankset, cassette and tyre combo', () => {
-            const results = calculateRollout(chainringSize, cassetteSize, tyreSize);
+            const results = calculateRollouts(chainringSize, cassetteSize, tyreSize);
             expect(results.length).toBe(chainringSize.length);
             expect(results[0].length).toBe(cassetteSize.length);
         });
 
         it('should return expected values for crankset, cassette and tyre combo', () => {
-            const results = calculateRollout(simplifiedChainringSize, simplifiedCassetteSize, simplifiedTyreSize);
+            const results = calculateRollouts(simplifiedChainringSize, simplifiedCassetteSize, simplifiedTyreSize);
             expect(results).toEqual(simplifiedRolloutResult);
         });
     });
