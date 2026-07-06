@@ -110,6 +110,47 @@ async function findTyre (req) {
     }
 }
 
+function findCadences (req) {
+    const { min_cadence, max_cadence, cadence_increment } = req.query;
+    
+    if (min_cadence == null || min_cadence == "") {
+        minCadence = 60;
+    } else if (! Number.isInteger(Number(min_cadence))) {
+        throw new TypeError("Invalid minimum cadence");
+    } else {
+        minCadence = Number(min_cadence);
+    }
+    if (max_cadence == null || max_cadence == "") {
+        maxCadence = 120;
+    } else if (! Number.isInteger(Number(max_cadence))) {
+        throw new TypeError("Invalid maximum cadence");
+    } else {
+        maxCadence = Number(max_cadence);
+    }
+
+    if (cadence_increment == null || cadence_increment == "") {
+        cadenceIncrement = 10;
+    } else if (! Number.isInteger(Number(cadence_increment))) {
+        throw new TypeError("Invalid cadence increment");
+    } else {
+        cadenceIncrement = Number(cadence_increment);
+    }
+
+    if (minCadence > maxCadence) {
+        throw new TypeError("min_cadence cannot be greater than max_cadence");
+    }
+    if (cadenceIncrement <= 0) {
+        throw new TypeError("cadence_increment must be greater than 0");
+    }
+
+    var cadenceList = [];
+    for (var cadence = minCadence; cadence <= maxCadence; cadence += cadenceIncrement) {
+        cadenceList.push(cadence);
+    }
+
+    return cadenceList;
+}
+
 router.get('/api/calculate/ratio', async (req, res) => {
     try {
         const rings = await findChainrings(req);
@@ -126,8 +167,6 @@ router.get('/api/calculate/ratio', async (req, res) => {
             res.status(404).json({ error: error.message });
         } else if (error instanceof TypeError) {
             res.status(400).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: error.message });
         }
     }
 })
@@ -150,8 +189,30 @@ router.get('/api/calculate/rollout', async (req, res) => {
             res.status(404).json({ error: error.message });
         } else if (error instanceof TypeError) {
             res.status(400).json({ error: error.message });
-        } else {
-            res.status(500).json({ error: error.message });
+        }
+    }
+})
+
+router.get('/api/calculate/speed', async (req, res) => {
+    try {
+        const rings = await findChainrings(req);
+        const sprockets = await findCassetteSprockets(req);
+        const circumference = await findTyre(req);
+        const cadenceList = findCadences(req);
+        const speed = calculateSpeeds(rings, sprockets, circumference, cadenceList);
+
+        res.json({
+            "chainrings": rings,
+            "sprockets": sprockets,
+            "circumference": circumference,
+            "cadences": cadenceList,
+            "results": speed
+        });
+    } catch (error) {
+        if (error instanceof ReferenceError) {
+            res.status(404).json({ error: error.message });
+        } else if (error instanceof TypeError) {
+            res.status(400).json({ error: error.message });
         }
     }
 })
