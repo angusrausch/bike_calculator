@@ -1,3 +1,4 @@
+use std::env;
 use dotenvy::dotenv;
 use tracing_subscriber::{fmt, EnvFilter};
 use std::sync::Arc;
@@ -23,7 +24,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     dotenv().ok();
 
-    let server_port = std::env::var("SERVER_PORT").expect("Server port must be set");
+    let args: Vec<String> = env::args().collect();
+
+    let server_port: String;
+    if args.len() > 1 && args[1] == "--port" {
+        server_port = args[2].clone();
+    } else {
+        server_port = std::env::var("SERVER_PORT").expect("Server port must be set");
+    }
+
     let db_url = std::env::var("DATABASE_CONNECTION_STRING").expect("DB URL must be set");
 
     let frontend_url = std::env::var("FRONTEND_URL")
