@@ -67,7 +67,7 @@ jobs:
           overwrite: true
 
   build_docker:
-    # if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     needs: test_rust
     strategy:
       matrix:
