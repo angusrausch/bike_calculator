@@ -8,7 +8,4 @@ RUN ./mvnw dependency:go-offline
  
 COPY src ./src
 
-COPY start.sh /app/
-RUN chmod +x start.sh
-
-ENTRYPOINT [ "/app/start.sh" ]
+ENTRYPOINT [ "./mvnw", "spring-boot:run", "-Dspring-boot.run.arguments=--server.port=5000"]
