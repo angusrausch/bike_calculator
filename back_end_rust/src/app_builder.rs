@@ -11,6 +11,7 @@ use std::time::Instant;
 
 pub fn build_app(state: AppState, cors: Option<CorsLayer>) -> Router {
     let mut app = Router::new()
+        .route("/health", get(|| async { axum::http::StatusCode::OK }))
         .route("/api/cassettes", get(get_cassettes))
         .route("/api/cranksets", get(get_cranksets))
         .route("/api/tyres", get(get_tyres))
