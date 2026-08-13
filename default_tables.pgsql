@@ -2,15 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict f26qEUckuqB634LTIRm6rScGO7WX20p4MrChq6GwQkr2yhfm3g70nCqKdtAZsPd
-
 -- Dumped from database version 18.1 (Homebrew)
 -- Dumped by pg_dump version 18.1 (Homebrew)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
-SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -20,7 +17,6 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 SET default_tablespace = '';
-
 SET default_table_access_method = heap;
 
 --
@@ -304,10 +300,6 @@ ALTER TABLE ONLY public.crankset_rings
 ALTER TABLE ONLY public.cassette_sprockets
     ADD CONSTRAINT fkqp1nw7iurf85jmy55s131qfru FOREIGN KEY (cassette_id) REFERENCES public.cassettes(id);
 
-
 --
 -- PostgreSQL database dump complete
 --
-
-\unrestrict f26qEUckuqB634LTIRm6rScGO7WX20p4MrChq6GwQkr2yhfm3g70nCqKdtAZsPd
-
