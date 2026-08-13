@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify  # 1. Import jsonify
 from flask_cors import CORS
 
 from .database import db
@@ -19,5 +19,9 @@ def create_app(test_config=None):
 	db.init_app(app)
 	app.register_blueprint(create_key_blueprint())
 	app.register_blueprint(create_calculator_blueprint())
+
+	@app.route('/health', methods=['GET'])
+	def health_check():
+		return "", 200
 
 	return app
