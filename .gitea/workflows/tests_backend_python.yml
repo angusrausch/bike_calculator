@@ -38,7 +38,7 @@ jobs:
     needs: test_python
     runs-on: ubuntu-26.04-arm
     container:
-      image: docker
+      image: gcr.io/kaniko-project/executor:latest
     permissions:
       contents: read
       packages: write
