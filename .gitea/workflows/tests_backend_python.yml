@@ -38,19 +38,21 @@ jobs:
     needs: test_python
     runs-on: ubuntu-26.04-arm
     container:
-      image: gcr.io/kaniko-project/executor:latest
+      image: docker
     permissions:
       contents: read
       packages: write
 
     steps:
+    - name: Add node to executable
+      run: apk add nodejs
     - uses: actions/checkout@v6
 
     - name: Log into container registry
       uses: docker/login-action@v4
       with:
         registry: git.rausch.com.au
-        username: ${{ github.actor }}
+        username: ${{ gitea.actor }}
         password: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
 
     - name: Set up QEMU
