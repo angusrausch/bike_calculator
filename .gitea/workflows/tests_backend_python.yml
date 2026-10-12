@@ -1,0 +1,65 @@
+name: Backend_Python_Test_and_Build
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test_python:
+    runs-on: ubuntu-26.04-arm
+    container:
+      image: nikolaik/python-nodejs:python3.14-nodejs26-slim
+    defaults:
+      run:
+        working-directory: ./back_end_python
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Install Pip Packages
+      run: |
+        pip3 install -r requirements.txt
+        pip3 install -e .
+    - name: Setup Fake Environment
+      run: mv .env.example .env
+    - name: Run Tests
+      run: |
+        coverage run -m pytest
+        coverage html
+    - name: Upload code coverage results
+      uses: actions/upload-artifact@v7
+      with:
+        name: code-coverage-report-python
+        path: back_end_python/htmlcov
+        retention-days: 7
+
+  build_docker:
+    if: ${{ gitea.event_name == 'push' && gitea.ref == 'refs/heads/main' }}
+    needs: test_python
+    runs-on: ubuntu-26.04-arm
+    container:
+      image: docker
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Add node to executable
+      run: apk add nodejs
+    - uses: actions/checkout@v6
+
+    - name: Log into container registry
+      uses: docker/login-action@v4
+      with:
+        registry: git.rausch.com.au
+        username: ${{ gitea.actor }}
+        password: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v7
+      with:
+        context: ./back_end_python
+        file: ./back_end_python/Dockerfile
+        platforms: linux/arm64
+        push: true
+        tags: git.rausch.com.au/angusrausch/bikecalc_backend_python:latest

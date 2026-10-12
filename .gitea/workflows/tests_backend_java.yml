@@ -1,0 +1,57 @@
+name: Backend_Tests_Java
+
+on:
+  push:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test_java:
+    runs-on: ubuntu-26.04-arm
+    container:
+      image: timbru31/java-node:25-jdk-lithium
+    defaults:
+      run:
+        working-directory: ./back_end_java
+    steps:
+    - uses: actions/checkout@v6
+    - name: Build and Run Tests
+      run: ./mvnw test
+    - name: Upload code coverage results
+      uses: actions/upload-artifact@v7
+      with:
+        name: code-coverage-report-java
+        path: back_end_java/target/site/jacoco
+        retention-days: 7
+
+
+  build_docker:
+    if: ${{ gitea.event_name == 'push' && gitea.ref == 'refs/heads/main' }}
+    needs: test_java
+    runs-on: ubuntu-26.04-arm
+    container:
+      image: docker
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Add node to executable
+      run: apk add nodejs
+    - uses: actions/checkout@v6
+
+    - name: Log into container registry
+      uses: docker/login-action@v4
+      with:
+        registry: git.rausch.com.au
+        username: ${{ gitea.actor }}
+        password: ${{ secrets.CONTAINER_REGISTRY_TOKEN }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v7
+      with:
+        context: ./back_end_java
+        file: ./back_end_java/Dockerfile
+        platforms: linux/arm64
+        push: true
+        tags: git.rausch.com.au/angusrausch/bikecalc_backend_java:latest
